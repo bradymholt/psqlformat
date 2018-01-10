@@ -6,6 +6,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
+  "bin": {
+    "pgformatter": "cli.js"
+  },
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bradymholt/pg-formatter-js.git"
@@ -21,5 +24,12 @@
   "bugs": {
     "url": "https://github.com/bradymholt/pg-formatter-js/issues"
   },
-  "homepage": "https://github.com/bradymholt/pg-formatter-js#readme"
+  "homepage": "https://github.com/bradymholt/pg-formatter-js#readme",
+  "devDependencies": {
+    "@types/node": "^9.3.0",
+    "typescript": "^2.6.2"
+  },
+  "dependencies": {
+    "yargs": "^10.1.1"
+  }
 }
