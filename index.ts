@@ -99,10 +99,11 @@ export default function formatFiles(fileOrGlob: string, options: IOptions) {
 export function formatSql(sqlText: string, options: IOptions) {
   let command = buildCommand(options);
   // Pass sqlText in as stdin and run pgFormatter
-  let result = execSync(command, {
+  let formatted = execSync(command, {
     encoding: "utf8",
     input: sqlText
   });
+  return formatted;
 }
 
 export { IOptions } from "./options";
