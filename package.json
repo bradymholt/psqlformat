@@ -27,9 +27,14 @@
   "homepage": "https://github.com/bradymholt/pg-formatter-js#readme",
   "devDependencies": {
     "@types/node": "^9.3.0",
+    "@types/yargs": "^10.0.1",
+    "ts-node": "^4.1.0",
     "typescript": "^2.6.2"
   },
   "dependencies": {
+    "@types/globby": "^6.1.0",
+    "globby": "^7.1.1",
+    "untildify": "^3.0.2",
     "yargs": "^10.1.1"
   }
 }
