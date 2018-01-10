@@ -1,5 +1,5 @@
 {
-  "name": "pgformat",
+  "name": "@bradymholt/pgformatter",
   "version": "0.1.0",
   "description": "PostgreSQL SQL syntax beautifier",
   "main": "index.js",
