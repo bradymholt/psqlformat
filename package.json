@@ -2,14 +2,14 @@
   "name": "@bradymholt/pgformatter",
   "version": "0.2.0",
   "description": "PostgreSQL SQL syntax beautifier",
-  "main": "dist/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "private": false,
+  "main": "dist/index.js",
   "bin": {
     "pgformatter": "dist/cli.js"
   },
+  "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bradymholt/pg-formatter-js.git"

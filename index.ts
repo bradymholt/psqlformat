@@ -6,48 +6,6 @@ import * as globby from "globby";
 import { execSync } from "child_process";
 import { IOptions, CaseOptionEnum } from "./options";
 
-/**
- *
- * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
- * @param options
- */
-export default function formatFiles(fileOrGlob: string, options: IOptions) {
-  let paths = globby.sync(fileOrGlob);
-
-  for (let path of paths) {
-    let startTime = performance.now();
-    let command = `${buildCommand(options)} ${path}`;
-    // Run pgFormatter
-    let formatted = execSync(command, {
-      encoding: "utf8"
-    });
-    let endTime = performance.now();
-
-    const elapsedTime = Math.round(endTime - startTime);
-
-    if (options.write) {
-      fs.writeFileSync(path, formatted);
-      console.log(`${path} ${elapsedTime}ms`);
-    } else {
-      console.log(formatted);
-    }
-  }
-}
-
-/**
- * Format SQL
- * @param sqlText The SQL to be formatted
- * @param options
- */
-export function formatSql(sqlText: string, options: IOptions) {
-  let command = buildCommand(options);
-  // Pass sqlText in as stdin and run pgFormatter
-  let result = execSync(command, {
-    encoding: "utf8",
-    input: sqlText
-  });
-}
-
 function buildCommand(options: IOptions) {
   let pgFormatterPath = path.resolve(
     __dirname,
@@ -104,3 +62,47 @@ function buildCommandArguments(options: IOptions) {
 
   return commandArgs;
 }
+
+/**
+ *
+ * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
+ * @param options
+ */
+export default function formatFiles(fileOrGlob: string, options: IOptions) {
+  let paths = globby.sync(fileOrGlob);
+
+  for (let path of paths) {
+    let startTime = performance.now();
+    let command = `${buildCommand(options)} ${path}`;
+    // Run pgFormatter
+    let formatted = execSync(command, {
+      encoding: "utf8"
+    });
+    let endTime = performance.now();
+
+    const elapsedTime = Math.round(endTime - startTime);
+
+    if (options.write) {
+      fs.writeFileSync(path, formatted);
+      console.log(`${path} ${elapsedTime}ms`);
+    } else {
+      console.log(formatted);
+    }
+  }
+}
+
+/**
+ * Format SQL
+ * @param sqlText The SQL to be formatted
+ * @param options
+ */
+export function formatSql(sqlText: string, options: IOptions) {
+  let command = buildCommand(options);
+  // Pass sqlText in as stdin and run pgFormatter
+  let result = execSync(command, {
+    encoding: "utf8",
+    input: sqlText
+  });
+}
+
+export { IOptions } from "./options";

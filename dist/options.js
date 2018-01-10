@@ -7,4 +7,3 @@ var CaseOptionEnum;
     CaseOptionEnum[CaseOptionEnum["uppercase"] = 2] = "uppercase";
     CaseOptionEnum[CaseOptionEnum["capitalize"] = 3] = "capitalize";
 })(CaseOptionEnum = exports.CaseOptionEnum || (exports.CaseOptionEnum = {}));
-//# sourceMappingURL=options.js.map

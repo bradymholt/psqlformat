@@ -4,7 +4,8 @@
     "target": "es6",
     "module": "commonjs",
     "strict": true,
-    "outDir": "dist"
+    "outDir": "dist",
+    "declaration": true
   },
   "include": [
     "./**/*.ts"

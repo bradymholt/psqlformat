@@ -71,4 +71,3 @@ By default, output is written to stdout. (use --write option to edit files in-pl
 }).argv;
 const options = yargs;
 let result = index_1.default(options._, options);
-//# sourceMappingURL=cli.js.map
