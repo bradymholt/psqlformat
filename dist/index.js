@@ -82,9 +82,10 @@ exports.default = formatFiles;
 function formatSql(sqlText, options) {
     let command = buildCommand(options);
     // Pass sqlText in as stdin and run pgFormatter
-    let result = child_process_1.execSync(command, {
+    let formatted = child_process_1.execSync(command, {
         encoding: "utf8",
         input: sqlText
     });
+    return formatted;
 }
 exports.formatSql = formatSql;

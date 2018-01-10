@@ -10,5 +10,5 @@ export default function formatFiles(fileOrGlob: string, options: IOptions): void
  * @param sqlText The SQL to be formatted
  * @param options
  */
-export declare function formatSql(sqlText: string, options: IOptions): void;
+export declare function formatSql(sqlText: string, options: IOptions): string;
 export { IOptions } from "./options";
