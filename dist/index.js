@@ -56,17 +56,17 @@ function buildCommandArguments(options) {
 function formatFiles(fileOrGlob, options) {
     let paths = globby.sync(fileOrGlob);
     for (let path of paths) {
-        let startTime = perf_hooks_1.performance.now();
+        let startTime = process.hrtime();
         let command = `${buildCommand(options)} ${path}`;
         // Run pgFormatter
         let formatted = child_process_1.execSync(command, {
             encoding: "utf8"
         });
         let endTime = perf_hooks_1.performance.now();
-        const elapsedTime = Math.round(endTime - startTime);
+        const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
         if (options.write) {
             fs.writeFileSync(path, formatted);
-            console.log(`${path} ${elapsedTime}ms`);
+            console.log(`${path} ${elapsedTimeMs}ms`);
         }
         else {
             console.log(formatted);

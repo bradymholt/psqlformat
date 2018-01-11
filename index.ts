@@ -72,7 +72,7 @@ export default function formatFiles(fileOrGlob: string, options: IOptions) {
   let paths = globby.sync(fileOrGlob);
 
   for (let path of paths) {
-    let startTime = performance.now();
+    let startTime = process.hrtime();
     let command = `${buildCommand(options)} ${path}`;
     // Run pgFormatter
     let formatted = execSync(command, {
@@ -80,11 +80,11 @@ export default function formatFiles(fileOrGlob: string, options: IOptions) {
     });
     let endTime = performance.now();
 
-    const elapsedTime = Math.round(endTime - startTime);
+    const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
 
     if (options.write) {
       fs.writeFileSync(path, formatted);
-      console.log(`${path} ${elapsedTime}ms`);
+      console.log(`${path} ${elapsedTimeMs}ms`);
     } else {
       console.log(formatted);
     }
