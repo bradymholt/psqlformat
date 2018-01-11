@@ -1,7 +1,5 @@
 import * as path from "path";
 import * as fs from "fs";
-import { performance } from "perf_hooks";
-const untildify = require("untildify");
 import * as globby from "globby";
 import { execSync } from "child_process";
 import { IOptions, CaseOptionEnum } from "./options";
