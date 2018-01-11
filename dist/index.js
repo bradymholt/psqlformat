@@ -60,7 +60,6 @@ function formatFiles(fileOrGlob, options) {
         let formatted = child_process_1.execSync(command, {
             encoding: "utf8"
         });
-        let endTime = performance.now();
         const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
         if (options.write) {
             fs.writeFileSync(path, formatted);

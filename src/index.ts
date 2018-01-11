@@ -76,7 +76,6 @@ export default function formatFiles(fileOrGlob: string, options: IOptions) {
     let formatted = execSync(command, {
       encoding: "utf8"
     });
-    let endTime = performance.now();
 
     const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
 
