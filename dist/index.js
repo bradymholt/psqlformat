@@ -2,8 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const path = require("path");
 const fs = require("fs");
-const perf_hooks_1 = require("perf_hooks");
-const untildify = require("untildify");
 const globby = require("globby");
 const child_process_1 = require("child_process");
 const options_1 = require("./options");
@@ -62,7 +60,7 @@ function formatFiles(fileOrGlob, options) {
         let formatted = child_process_1.execSync(command, {
             encoding: "utf8"
         });
-        let endTime = perf_hooks_1.performance.now();
+        let endTime = performance.now();
         const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
         if (options.write) {
             fs.writeFileSync(path, formatted);
