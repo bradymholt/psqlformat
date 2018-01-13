@@ -11,8 +11,11 @@ function buildCommand(options) {
 }
 function buildCommandArguments(options) {
     let commandArgs = "";
-    if (options.anonymize) {
-        commandArgs += " --anonymize";
+    if (options.spaces) {
+        commandArgs += ` --spaces ${options.spaces}`;
+    }
+    if (options.maxLength) {
+        commandArgs += ` --maxlength ${options.maxLength}`;
     }
     if (options.commaStart) {
         commandArgs += " --comma-start";
@@ -20,23 +23,11 @@ function buildCommandArguments(options) {
     else if (options.commaEnd) {
         commandArgs += " --comma-end";
     }
-    if (options.functionCase != null) {
-        commandArgs += ` --function-case ${options.functionCase}`;
-    }
-    if (options.maxLength) {
-        commandArgs += ` --maxlength ${options.maxLength}`;
-    }
     if (options.noComment) {
         commandArgs += " --nocomment";
     }
-    if (options.placeholder) {
-        commandArgs += ` --placeholder ${options.placeholder}`;
-    }
-    if (options.spaces) {
-        commandArgs += ` --spaces ${options.spaces}`;
-    }
-    if (options.separator) {
-        commandArgs += ` --separator \\${options.separator}`;
+    if (options.functionCase != null) {
+        commandArgs += ` --function-case ${options.functionCase}`;
     }
     if (options.keywordCase != null) {
         commandArgs += ` --keyword-case ${options.keywordCase}`;

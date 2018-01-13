@@ -1,10 +1,10 @@
-import * as argv from "yargs";
+import * as yargs from "yargs";
 import formatFiles from "./index";
 import { IOptions, CaseOptionEnum } from "./options";
 import { Options } from "yargs";
 
-function run(args: any) {
-  let yargs = argv
+function exec(args: any, writeOutput: (text: string) => void = console.log) {
+  let parsedArguments = yargs(args)
     .usage(
       `
 Usage: $0 [options] <file/glob ...>
@@ -57,22 +57,23 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         default: "perl",
         describe: "The path to the Perl executable"
       }
-    }).argv;
+    })
+    .demandCommand(1, "").argv;
 
-  const filesOrGlobs = yargs._;
-  const options: IOptions = <any>yargs;
+  const filesOrGlobs = parsedArguments._;
+  const options: IOptions = <any>parsedArguments;
 
   // Convert option strings to enums
-  if (yargs.functionCase != null) {
-    options.functionCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.functionCase];
+  if (parsedArguments.functionCase != null) {
+    options.functionCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>parsedArguments.functionCase];
   }
-  if (yargs.keywordCase != null) {
-    options.keywordCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.keywordCase];
+  if (parsedArguments.keywordCase != null) {
+    options.keywordCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>parsedArguments.keywordCase];
   }
 
-  formatFiles(filesOrGlobs, options, console.log);
+  formatFiles(filesOrGlobs, options, writeOutput);
 }
 
 export default {
-  run
+  exec
 };

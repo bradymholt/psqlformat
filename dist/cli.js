@@ -1,10 +1,10 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-const argv = require("yargs");
+const yargs = require("yargs");
 const index_1 = require("./index");
 const options_1 = require("./options");
-function run(args) {
-    let yargs = argv
+function exec(args, writeOutput = console.log) {
+    let parsedArguments = yargs(args)
         .usage(`
 Usage: $0 [options] <file/glob ...>
 
@@ -15,9 +15,14 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             type: "boolean",
             describe: "Edit files in-place. (Beware!)"
         },
-        anonymize: {
-            type: "boolean",
-            describe: "Obscure all literals in queries, useful to hide confidential data before formatting"
+        spaces: {
+            type: "number",
+            default: 4,
+            describe: "Number of spaces to indent the code"
+        },
+        maxLength: {
+            type: "number",
+            describe: "Maximum length of a query"
         },
         commaStart: {
             type: "boolean",
@@ -28,35 +33,16 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             default: true,
             describe: "In a parameters list, end with the comma"
         },
-        functionCase: {
-            type: "string",
-            default: "unchanged",
-            choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
-            describe: "Case of the function names"
-        },
-        maxLength: {
-            type: "number",
-            describe: "Maximum length of a query"
-        },
         noComment: {
             type: "boolean",
             default: false,
             describe: "Remove any comments"
         },
-        placeholder: {
+        functionCase: {
             type: "string",
-            default: null,
-            describe: "Regex to find code that must not be changed"
-        },
-        spaces: {
-            type: "number",
-            default: 4,
-            describe: "Number of spaces to indent the code"
-        },
-        separator: {
-            type: "string",
-            default: "'",
-            describe: "Dynamic code separator"
+            default: "unchanged",
+            choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
+            describe: "Case of the function names"
         },
         keywordCase: {
             type: "string",
@@ -69,18 +55,19 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             default: "perl",
             describe: "The path to the Perl executable"
         }
-    }).argv;
-    const options = yargs;
-    if (yargs.functionCase != null) {
-        options.functionCase =
-            options_1.CaseOptionEnum[yargs.functionCase];
+    })
+        .demandCommand(1, "").argv;
+    const filesOrGlobs = parsedArguments._;
+    const options = parsedArguments;
+    // Convert option strings to enums
+    if (parsedArguments.functionCase != null) {
+        options.functionCase = options_1.CaseOptionEnum[parsedArguments.functionCase];
     }
-    if (yargs.keywordCase != null) {
-        options.keywordCase =
-            options_1.CaseOptionEnum[yargs.keywordCase];
+    if (parsedArguments.keywordCase != null) {
+        options.keywordCase = options_1.CaseOptionEnum[parsedArguments.keywordCase];
     }
-    let result = index_1.default(yargs._, options, console.log);
+    index_1.default(filesOrGlobs, options, writeOutput);
 }
 exports.default = {
-    run
+    exec
 };

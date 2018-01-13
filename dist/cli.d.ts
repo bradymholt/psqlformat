@@ -1,4 +1,4 @@
 declare const _default: {
-    run: (args: any) => void;
+    exec: (args: any, writeOutput?: (text: string) => void) => void;
 };
 export default _default;
