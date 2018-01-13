@@ -41,8 +41,8 @@
   },
   "scripts": {
     "build": "tsc",
-    "test": "npx mocha",
-    "start": "ts-node src/bin.ts",
+    "test": "npx mocha --require ts-node/register --recursive ./test/*.ts",
+    "start": "ts-node src/bin.ts test/support/query.sql",
     "release": "tsc && npx npm-github-release"
   }
 }

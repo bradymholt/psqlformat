@@ -10,7 +10,9 @@
             "name": "CLI",
             "program": "${workspaceRoot}/node_modules/ts-node/dist/_bin.js",
             "args": [
-                "${workspaceFolder}/src/bin.ts"
+                "${workspaceFolder}/src/bin.ts",
+                "--write",
+                "/Users/bholt/Desktop/tmp.sql"
             ]
         },
         {

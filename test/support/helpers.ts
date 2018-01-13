@@ -1,13 +1,13 @@
 import * as process from "process";
-// capture terminal output, so that we might
-// assert against it.
-export function checkOutput(f) {
-  let exit = false;
 
+// Pulled and adapted from https://github.com/yargs/yargs/blob/master/test/helpers/utils.js
+// This method runs a function and captures console output and whether process.exit was called.
+
+export function checkOutput(f, argv = global.process.argv) {
+  let exit = false;
   var process: any = global.process;
+
   const _exit = process.exit;
-  const _emit = process.emit;
-  const _env = process.env;
   const _argv = process.argv;
   const _error = console.error;
   const _log = console.log;
@@ -16,6 +16,8 @@ export function checkOutput(f) {
   process.exit = () => {
     exit = true;
   };
+
+  process.argv = argv;
 
   const errors = [];
   const logs = [];
@@ -43,8 +45,6 @@ export function checkOutput(f) {
 
   function reset() {
     process.exit = _exit;
-    process.emit = _emit;
-    process.env = _env;
     process.argv = _argv;
 
     console.error = _error;

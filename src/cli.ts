@@ -1,9 +1,9 @@
 import * as yargs from "yargs";
-import formatFiles from "./index";
+import { formatFiles } from "./index";
 import { IOptions, CaseOptionEnum } from "./options";
 import { Options } from "yargs";
 
-function exec(args: any, writeOutput: (text: string) => void = console.log) {
+function exec(args: any, log: (text: string) => void = console.log) {
   let parsedArguments = yargs(args)
     .usage(
       `
@@ -28,16 +28,15 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       },
       commaStart: {
         type: "boolean",
-        describe: "In a parameters list, start with the comma"
+        describe: "Use preceding comma in parameter list"
       },
       commaEnd: {
         type: "boolean",
         default: true,
-        describe: "In a parameters list, end with the comma"
+        describe: "Use trailing comma in parameter list"
       },
       noComment: {
         type: "boolean",
-        default: false,
         describe: "Remove any comments"
       },
       functionCase: {
@@ -55,12 +54,14 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       perlBinPath: {
         type: "string",
         default: "perl",
-        describe: "The path to the Perl executable"
+        describe: "The path to the perl executable"
       }
     })
     .demandCommand(1, "").argv;
 
   const filesOrGlobs = parsedArguments._;
+  const editInPlace = !!parsedArguments.write;
+
   const options: IOptions = <any>parsedArguments;
 
   // Convert option strings to enums
@@ -71,7 +72,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
     options.keywordCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>parsedArguments.keywordCase];
   }
 
-  formatFiles(filesOrGlobs, options, writeOutput);
+  let output = formatFiles(filesOrGlobs, editInPlace, options, log);
+  if (!editInPlace) {
+    log(output);
+  }
 }
 
 export default {
