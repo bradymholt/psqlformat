@@ -1,5 +1,5 @@
 {
-  "name": "pgformat",
+  "name": "psqlformat",
   "version": "0.12.0",
   "main": "dist/index.js",
   "bin": {
