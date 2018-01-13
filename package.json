@@ -1,5 +1,5 @@
 {
-  "name": "@bradymholt/pgformatter",
+  "name": "pgformat",
   "version": "0.12.0",
   "main": "dist/index.js",
   "bin": {
