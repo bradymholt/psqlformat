@@ -15,7 +15,7 @@ function formatFiles(filesOrGlobs, options = {}, log = console.log) {
     for (let path of paths) {
         let startTime = process.hrtime();
         let command = `${buildCommand(options)} ${path}`;
-        // Run psqlformat
+        // Run pgFormatter
         let formatted = child_process_1.execSync(command, {
             encoding: "utf8"
         });
@@ -37,7 +37,7 @@ exports.formatFiles = formatFiles;
  */
 function formatSql(sqlText, options = {}) {
     let command = buildCommand(options);
-    // Pass sqlText in as stdin and run psqlformat
+    // Pass sqlText in as stdin and run pgFormatter
     let formatted = child_process_1.execSync(command, {
         encoding: "utf8",
         input: sqlText
@@ -46,9 +46,9 @@ function formatSql(sqlText, options = {}) {
 }
 exports.formatSql = formatSql;
 function buildCommand(options) {
-    let psqlformatPath = path.resolve(__dirname, "../vendor/psqlformat/pg_format");
+    let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
     let commandArgs = buildCommandArguments(options);
-    return `${options.perlBinPath || "perl"} ${psqlformatPath} ${commandArgs}`;
+    return `${options.perlBinPath || "perl"} ${pgFormatterPath} ${commandArgs}`;
 }
 exports.buildCommand = buildCommand;
 function buildCommandArguments(options) {
