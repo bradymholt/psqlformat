@@ -1,4 +1,4 @@
 declare const _default: {
     run: (args: any) => void;
 };
-export = _default;
+export default _default;

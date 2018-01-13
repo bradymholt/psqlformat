@@ -7,14 +7,19 @@
         {
             "type": "node",
             "request": "launch",
-            "name": "Launch Program",
-            "program": "${workspaceFolder}/dist/cli.js",
+            "name": "CLI",
+            "program": "${workspaceRoot}/node_modules/ts-node/dist/_bin.js",
             "args": [
-                "--write ~/Desktop/tmp.sql"
-            ],
-            "outFiles": [
-                "${workspaceFolder}/**/*.js"
+                "${workspaceFolder}/src/bin.ts"
             ]
+        },
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Tests",
+            "program": "${workspaceFolder}/node_modules/.bin/_mocha"
+
         }
+
     ]
 }

@@ -4,7 +4,6 @@ const path = require("path");
 const fs = require("fs");
 const globby = require("globby");
 const child_process_1 = require("child_process");
-const options_1 = require("./options");
 function buildCommand(options) {
     let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
     let commandArgs = buildCommandArguments(options);
@@ -21,9 +20,8 @@ function buildCommandArguments(options) {
     else if (options.commaEnd) {
         commandArgs += " --comma-end";
     }
-    if (options.functionCase) {
-        let functionCase = options_1.CaseOptionEnum[options.functionCase];
-        commandArgs += ` --function-case ${functionCase}`;
+    if (options.functionCase != null) {
+        commandArgs += ` --function-case ${options.functionCase}`;
     }
     if (options.maxLength) {
         commandArgs += ` --maxlength ${options.maxLength}`;
@@ -40,19 +38,19 @@ function buildCommandArguments(options) {
     if (options.separator) {
         commandArgs += ` --separator \\${options.separator}`;
     }
-    if (options.keywordCase) {
-        let keywordCase = options_1.CaseOptionEnum[options.keywordCase];
-        commandArgs += ` --keyword-case ${keywordCase}`;
+    if (options.keywordCase != null) {
+        commandArgs += ` --keyword-case ${options.keywordCase}`;
     }
     return commandArgs;
 }
+exports.buildCommandArguments = buildCommandArguments;
 /**
  *
  * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
  * @param options
  */
-function formatFiles(fileOrGlob, options) {
-    let paths = globby.sync(fileOrGlob);
+function formatFiles(filesOrGlobs, options, writeOutput) {
+    let paths = globby.sync(filesOrGlobs);
     for (let path of paths) {
         let startTime = process.hrtime();
         let command = `${buildCommand(options)} ${path}`;
@@ -63,10 +61,10 @@ function formatFiles(fileOrGlob, options) {
         const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
         if (options.write) {
             fs.writeFileSync(path, formatted);
-            console.log(`${path} ${elapsedTimeMs}ms`);
+            writeOutput(`${path} ${elapsedTimeMs}ms`);
         }
         else {
-            console.log(formatted);
+            writeOutput(formatted);
         }
     }
 }

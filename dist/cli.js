@@ -1,10 +1,12 @@
 "use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
 const argv = require("yargs");
 const index_1 = require("./index");
+const options_1 = require("./options");
 function run(args) {
-    // version
     let yargs = argv
-        .usage(`Usage: $0 [options] <file/glob ...>
+        .usage(`
+Usage: $0 [options] <file/glob ...>
 
 By default, output is written to stdout. (use --write option to edit files in-place)
 `)
@@ -57,7 +59,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             describe: "Dynamic code separator"
         },
         keywordCase: {
-            type: "number",
+            type: "string",
             default: "uppercase",
             choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
             describe: "Case of the reserved keywords"
@@ -69,8 +71,16 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         }
     }).argv;
     const options = yargs;
-    let result = index_1.default(options._, options);
+    if (yargs.functionCase != null) {
+        options.functionCase =
+            options_1.CaseOptionEnum[yargs.functionCase];
+    }
+    if (yargs.keywordCase != null) {
+        options.keywordCase =
+            options_1.CaseOptionEnum[yargs.keywordCase];
+    }
+    let result = index_1.default(yargs._, options, console.log);
 }
-module.exports = {
+exports.default = {
     run
 };

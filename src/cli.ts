@@ -1,13 +1,12 @@
 import * as argv from "yargs";
 import formatFiles from "./index";
-import { IOptions } from "./options";
+import { IOptions, CaseOptionEnum } from "./options";
 import { Options } from "yargs";
 
 function run(args: any) {
-  // version
   let yargs = argv
-    .usage(
-      `Usage: $0 [options] <file/glob ...>
+    .usage(`
+Usage: $0 [options] <file/glob ...>
 
 By default, output is written to stdout. (use --write option to edit files in-place)
 `
@@ -62,7 +61,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         describe: "Dynamic code separator"
       },
       keywordCase: {
-        type: "number",
+        type: "string",
         default: "uppercase",
         choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
         describe: "Case of the reserved keywords"
@@ -74,10 +73,19 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       }
     }).argv;
 
-  const options = <any>yargs;
-  let result = formatFiles(options._, <IOptions>options);
+  const options: IOptions = <any>yargs;
+  if (yargs.functionCase != null) {
+    options.functionCase =
+      CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.functionCase];
+  }
+  if (yargs.keywordCase != null) {
+    options.keywordCase =
+      CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.keywordCase];
+  }
+
+  let result = formatFiles(yargs._, options, console.log);
 }
 
-export = {
+export default {
   run
 };

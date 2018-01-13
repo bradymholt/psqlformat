@@ -3,24 +3,22 @@
   "version": "0.9.0",
   "description": "PostgreSQL SQL syntax beautifier",
   "scripts": {
-    "release": "npx npm-github-release",
-    "test": "mocha --require ts-node/register --recursive test/*.ts"
+    "build": "tsc",
+    "test": "npx mocha",
+    "start": "ts-node src/bin.ts",
+    "release": "tsc && npx npm-github-release"
   },
   "main": "dist/index.js",
   "bin": {
-    "pgformatter": "bin/pgformatter.js"
+    "pgformatter": "dist/bin.js"
   },
+  "files": ["dist/"],
   "types": "dist/index.d.ts",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/bradymholt/pg-formatter-js.git"
   },
-  "keywords": [
-    "sql",
-    "postgres",
-    "postgreSQL",
-    "formatting"
-  ],
+  "keywords": ["sql", "postgres", "postgreSQL", "formatting"],
   "author": "Brady Holt",
   "license": "MIT",
   "bugs": {

@@ -2,12 +2,14 @@
   "compilerOptions": {
     /* Basic Options */
     "target": "es6",
+    "noEmitOnError": true,
     "module": "commonjs",
     "strict": true,
     "outDir": "dist",
-    "declaration": true
+    "declaration": true,
+    "sourceMap": false
   },
   "include": [
-    "./**/*.ts"
+    "src/**/*.ts"
   ]
 }

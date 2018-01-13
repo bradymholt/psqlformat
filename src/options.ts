@@ -1,18 +1,18 @@
 export interface IOptions {
-  anonymize: boolean;
-  commaStart: boolean;
-  commaEnd: boolean;
-  functionCase: string;
-  maxLength: number;
-  noComment: boolean;
-  placeholder: string;
-  spaces: number;
-  separator: string;
-  keywordCase: string;
+  anonymize?: boolean;
+  commaStart?: boolean;
+  commaEnd?: boolean;
+  functionCase?: CaseOptionEnum;
+  maxLength?: number;
+  noComment?: boolean;
+  placeholder?: string;
+  spaces?: number;
+  separator?: string;
+  keywordCase?: CaseOptionEnum;
 
-  perlBinPath: string;
-  write: string;
-  fileOrGlob: string;
+  perlBinPath?: string;
+  write?: boolean;
+  fileOrGlob?: string;
 }
 
 export enum CaseOptionEnum {

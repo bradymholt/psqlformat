@@ -14,7 +14,7 @@ function buildCommand(options: IOptions) {
   return `${options.perlBinPath} ${pgFormatterPath} ${commandArgs}`;
 }
 
-function buildCommandArguments(options: IOptions) {
+export function buildCommandArguments(options: IOptions) {
   let commandArgs = "";
   if (options.anonymize) {
     commandArgs += " --anonymize";
@@ -26,10 +26,8 @@ function buildCommandArguments(options: IOptions) {
     commandArgs += " --comma-end";
   }
 
-  if (options.functionCase) {
-    let functionCase =
-      CaseOptionEnum[<keyof typeof CaseOptionEnum>options.functionCase];
-    commandArgs += ` --function-case ${functionCase}`;
+  if (options.functionCase != null) {
+    commandArgs += ` --function-case ${options.functionCase}`;
   }
 
   if (options.maxLength) {
@@ -52,10 +50,8 @@ function buildCommandArguments(options: IOptions) {
     commandArgs += ` --separator \\${options.separator}`;
   }
 
-  if (options.keywordCase) {
-    let keywordCase =
-      CaseOptionEnum[<keyof typeof CaseOptionEnum>options.keywordCase];
-    commandArgs += ` --keyword-case ${keywordCase}`;
+  if (options.keywordCase != null) {
+    commandArgs += ` --keyword-case ${options.keywordCase}`;
   }
 
   return commandArgs;
@@ -66,8 +62,12 @@ function buildCommandArguments(options: IOptions) {
  * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
  * @param options
  */
-export default function formatFiles(fileOrGlob: string, options: IOptions) {
-  let paths = globby.sync(fileOrGlob);
+export default function formatFiles(
+  filesOrGlobs: string | string[],
+  options: IOptions,
+  writeOutput: (text: string) => void
+) {
+  let paths = globby.sync(filesOrGlobs);
 
   for (let path of paths) {
     let startTime = process.hrtime();
@@ -81,9 +81,9 @@ export default function formatFiles(fileOrGlob: string, options: IOptions) {
 
     if (options.write) {
       fs.writeFileSync(path, formatted);
-      console.log(`${path} ${elapsedTimeMs}ms`);
+      writeOutput(`${path} ${elapsedTimeMs}ms`);
     } else {
-      console.log(formatted);
+      writeOutput(formatted);
     }
   }
 }
