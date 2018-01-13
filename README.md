@@ -1,17 +1,17 @@
-# pgformatter
+# psqlformat
 
-A PostgreSQL SQL syntax beautifier.  This is a wrapper for [darold/pgFormatter](https://github.com/darold/pgFormatter) and requires Perl to be available.
+A PostgreSQL SQL syntax beautifier.  This is a wrapper for [darold/psqlformat](https://github.com/darold/psqlformat) and requires Perl to be available.
 
 ## Examples
 
 ### Module
 
 ```
-npm install @bradymholt/pgformatter 
+npm install psqlformat
 ```
 
 ```
-import { formatSql } from "@bradymholt/pgformatter";
+import { formatSql } from "@bradymholt/psqlformat";
 let formatted = formatSql("select id from people", { spaces: 2 });
 console.log(formatted);
 
@@ -26,7 +26,7 @@ FROM
 ### CLI
 
 ```
-npx @bradymholt/pgformatter --write --spaces=2 query.sql
+npx psqlformat --write --spaces=2 query.sql
 
 query.sql [32ms]
 ```

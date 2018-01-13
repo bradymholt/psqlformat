@@ -3,7 +3,7 @@
   "version": "0.12.0",
   "main": "dist/index.js",
   "bin": {
-    "pgformatter": "dist/bin.js"
+    "psqlformat": "dist/bin.js"
   },
   "description": "PostgreSQL SQL syntax beautifier",
   "keywords": [
@@ -14,13 +14,13 @@
   ],
   "author": "Brady Holt",
   "license": "MIT",
-  "homepage": "https://github.com/bradymholt/pgformatter#readme",
+  "homepage": "https://github.com/bradymholt/psqlformat#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bradymholt/pgformatter.git"
+    "url": "git+https://github.com/bradymholt/psqlformat.git"
   },
   "bugs": {
-    "url": "https://github.com/bradymholt/pgformatter/issues"
+    "url": "https://github.com/bradymholt/psqlformat/issues"
   },
   "files": [
     "dist/",
