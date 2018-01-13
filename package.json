@@ -1,12 +1,17 @@
 {
   "name": "@bradymholt/pgformatter",
-  "version": "0.10.0",
+  "version": "0.11.0",
   "main": "dist/index.js",
   "bin": {
     "pgformatter": "dist/bin.js"
   },
   "description": "PostgreSQL SQL syntax beautifier",
-  "keywords": ["sql", "postgres", "postgreSQL", "formatting"],
+  "keywords": [
+    "sql",
+    "postgres",
+    "postgreSQL",
+    "formatting"
+  ],
   "author": "Brady Holt",
   "license": "MIT",
   "homepage": "https://github.com/bradymholt/pg-formatter-js#readme",
@@ -17,7 +22,9 @@
   "bugs": {
     "url": "https://github.com/bradymholt/pg-formatter-js/issues"
   },
-  "files": ["dist/"],
+  "files": [
+    "dist/"
+  ],
   "types": "dist/index.d.ts",
   "devDependencies": {
     "@types/chai": "^4.1.0",
