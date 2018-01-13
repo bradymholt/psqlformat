@@ -3,10 +3,6 @@ import { buildCommandArguments } from "../src/index";
 import { expect } from "chai";
 
 describe("options", function() {
-  it("anonymize", function() {
-    expect(buildCommandArguments({ anonymize: true })).to.contain("--anonymize");
-  });
-
   it("commaStart", function() {
     expect(buildCommandArguments({ commaStart: true })).to.contain("--comma-start");
   });
@@ -29,11 +25,12 @@ describe("options", function() {
     expect(buildCommandArguments({ maxLength: 120 })).to.contain("--maxlength 120");
   });
 
-  it("maxLength", function() {
-    expect(buildCommandArguments({ maxLength: 120 })).to.contain("--maxlength 120");
+  it("noComment", function() {
+    expect(buildCommandArguments({ noComment: true })).to.contain("--nocomment");
   });
 
-  it("maxLength", function() {
-    expect(buildCommandArguments({ maxLength: 120 })).to.contain("--maxlength 120");
+  it("spaces", function() {
+    expect(buildCommandArguments({ spaces: 6 })).to.contain("--spaces 6");
   });
+
 });

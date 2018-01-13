@@ -5,10 +5,7 @@ import { execSync } from "child_process";
 import { IOptions, CaseOptionEnum } from "./options";
 
 function buildCommand(options: IOptions) {
-  let pgFormatterPath = path.resolve(
-    __dirname,
-    "../vendor/pgFormatter/pg_format"
-  );
+  let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
   let commandArgs = buildCommandArguments(options);
 
   return `${options.perlBinPath} ${pgFormatterPath} ${commandArgs}`;
@@ -16,8 +13,13 @@ function buildCommand(options: IOptions) {
 
 export function buildCommandArguments(options: IOptions) {
   let commandArgs = "";
-  if (options.anonymize) {
-    commandArgs += " --anonymize";
+
+  if (options.spaces) {
+    commandArgs += ` --spaces ${options.spaces}`;
+  }
+
+  if (options.maxLength) {
+    commandArgs += ` --maxlength ${options.maxLength}`;
   }
 
   if (options.commaStart) {
@@ -26,28 +28,12 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += " --comma-end";
   }
 
-  if (options.functionCase != null) {
-    commandArgs += ` --function-case ${options.functionCase}`;
-  }
-
-  if (options.maxLength) {
-    commandArgs += ` --maxlength ${options.maxLength}`;
-  }
-
   if (options.noComment) {
     commandArgs += " --nocomment";
   }
 
-  if (options.placeholder) {
-    commandArgs += ` --placeholder ${options.placeholder}`;
-  }
-
-  if (options.spaces) {
-    commandArgs += ` --spaces ${options.spaces}`;
-  }
-
-  if (options.separator) {
-    commandArgs += ` --separator \\${options.separator}`;
+  if (options.functionCase != null) {
+    commandArgs += ` --function-case ${options.functionCase}`;
   }
 
   if (options.keywordCase != null) {

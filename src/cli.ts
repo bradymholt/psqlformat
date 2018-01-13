@@ -5,7 +5,8 @@ import { Options } from "yargs";
 
 function run(args: any) {
   let yargs = argv
-    .usage(`
+    .usage(
+      `
 Usage: $0 [options] <file/glob ...>
 
 By default, output is written to stdout. (use --write option to edit files in-place)
@@ -16,10 +17,14 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         type: "boolean",
         describe: "Edit files in-place. (Beware!)"
       },
-      anonymize: {
-        type: "boolean",
-        describe:
-          "Obscure all literals in queries, useful to hide confidential data before formatting"
+      spaces: {
+        type: "number",
+        default: 4,
+        describe: "Number of spaces to indent the code"
+      },
+      maxLength: {
+        type: "number",
+        describe: "Maximum length of a query"
       },
       commaStart: {
         type: "boolean",
@@ -30,35 +35,16 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         default: true,
         describe: "In a parameters list, end with the comma"
       },
-      functionCase: {
-        type: "string",
-        default: "unchanged",
-        choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
-        describe: "Case of the function names"
-      },
-      maxLength: {
-        type: "number",
-        describe: "Maximum length of a query"
-      },
       noComment: {
         type: "boolean",
         default: false,
         describe: "Remove any comments"
       },
-      placeholder: {
+      functionCase: {
         type: "string",
-        default: null,
-        describe: "Regex to find code that must not be changed"
-      },
-      spaces: {
-        type: "number",
-        default: 4,
-        describe: "Number of spaces to indent the code"
-      },
-      separator: {
-        type: "string",
-        default: "'",
-        describe: "Dynamic code separator"
+        default: "unchanged",
+        choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
+        describe: "Case of the function names"
       },
       keywordCase: {
         type: "string",
@@ -73,17 +59,18 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       }
     }).argv;
 
+  const filesOrGlobs = yargs._;
   const options: IOptions = <any>yargs;
+
+  // Convert option strings to enums
   if (yargs.functionCase != null) {
-    options.functionCase =
-      CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.functionCase];
+    options.functionCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.functionCase];
   }
   if (yargs.keywordCase != null) {
-    options.keywordCase =
-      CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.keywordCase];
+    options.keywordCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>yargs.keywordCase];
   }
 
-  let result = formatFiles(yargs._, options, console.log);
+  formatFiles(filesOrGlobs, options, console.log);
 }
 
 export default {
