@@ -23,7 +23,8 @@
     "url": "https://github.com/bradymholt/pgformatter/issues"
   },
   "files": [
-    "dist/"
+    "dist/",
+    "vendor/"
   ],
   "types": "dist/index.d.ts",
   "devDependencies": {
