@@ -4,11 +4,53 @@ const path = require("path");
 const fs = require("fs");
 const globby = require("globby");
 const child_process_1 = require("child_process");
+/**
+ *
+ * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
+ * @param options
+ */
+function formatFiles(filesOrGlobs, options = {}, log = console.log) {
+    let paths = globby.sync(filesOrGlobs);
+    let output = "";
+    for (let path of paths) {
+        let startTime = process.hrtime();
+        let command = `${buildCommand(options)} ${path}`;
+        // Run pgFormatter
+        let formatted = child_process_1.execSync(command, {
+            encoding: "utf8"
+        });
+        const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
+        output += formatted;
+        if (options.write) {
+            // Override file with formatted SQL and log progress
+            fs.writeFileSync(path, formatted);
+            log(`${path} [${elapsedTimeMs}ms]`);
+        }
+    }
+    return output;
+}
+exports.formatFiles = formatFiles;
+/**
+ * Format SQL
+ * @param sqlText The SQL to be formatted
+ * @param options
+ */
+function formatSql(sqlText, options = {}) {
+    let command = buildCommand(options);
+    // Pass sqlText in as stdin and run pgFormatter
+    let formatted = child_process_1.execSync(command, {
+        encoding: "utf8",
+        input: sqlText
+    });
+    return formatted;
+}
+exports.formatSql = formatSql;
 function buildCommand(options) {
     let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
     let commandArgs = buildCommandArguments(options);
-    return `${options.perlBinPath} ${pgFormatterPath} ${commandArgs}`;
+    return `${options.perlBinPath || "perl"} ${pgFormatterPath} ${commandArgs}`;
 }
+exports.buildCommand = buildCommand;
 function buildCommandArguments(options) {
     let commandArgs = "";
     if (options.spaces) {
@@ -35,43 +77,3 @@ function buildCommandArguments(options) {
     return commandArgs;
 }
 exports.buildCommandArguments = buildCommandArguments;
-/**
- *
- * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
- * @param options
- */
-function formatFiles(filesOrGlobs, options, writeOutput) {
-    let paths = globby.sync(filesOrGlobs);
-    for (let path of paths) {
-        let startTime = process.hrtime();
-        let command = `${buildCommand(options)} ${path}`;
-        // Run pgFormatter
-        let formatted = child_process_1.execSync(command, {
-            encoding: "utf8"
-        });
-        const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
-        if (options.write) {
-            fs.writeFileSync(path, formatted);
-            writeOutput(`${path} ${elapsedTimeMs}ms`);
-        }
-        else {
-            writeOutput(formatted);
-        }
-    }
-}
-exports.default = formatFiles;
-/**
- * Format SQL
- * @param sqlText The SQL to be formatted
- * @param options
- */
-function formatSql(sqlText, options) {
-    let command = buildCommand(options);
-    // Pass sqlText in as stdin and run pgFormatter
-    let formatted = child_process_1.execSync(command, {
-        encoding: "utf8",
-        input: sqlText
-    });
-    return formatted;
-}
-exports.formatSql = formatSql;

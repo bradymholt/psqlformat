@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const yargs = require("yargs");
 const index_1 = require("./index");
 const options_1 = require("./options");
-function exec(args, writeOutput = console.log) {
+function exec(args, log = console.log) {
     let parsedArguments = yargs(args)
         .usage(`
 Usage: $0 [options] <file/glob ...>
@@ -26,16 +26,15 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         },
         commaStart: {
             type: "boolean",
-            describe: "In a parameters list, start with the comma"
+            describe: "Use preceding comma in parameter list"
         },
         commaEnd: {
             type: "boolean",
             default: true,
-            describe: "In a parameters list, end with the comma"
+            describe: "Use trailing comma in parameter list"
         },
         noComment: {
             type: "boolean",
-            default: false,
             describe: "Remove any comments"
         },
         functionCase: {
@@ -53,7 +52,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         perlBinPath: {
             type: "string",
             default: "perl",
-            describe: "The path to the Perl executable"
+            describe: "The path to the perl executable"
         }
     })
         .demandCommand(1, "").argv;
@@ -66,7 +65,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
     if (parsedArguments.keywordCase != null) {
         options.keywordCase = options_1.CaseOptionEnum[parsedArguments.keywordCase];
     }
-    index_1.default(filesOrGlobs, options, writeOutput);
+    let output = index_1.formatFiles(filesOrGlobs, options, log);
+    if (!options.write) {
+        log(output);
+    }
 }
 exports.default = {
     exec
