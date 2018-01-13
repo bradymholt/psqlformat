@@ -2,15 +2,13 @@
 
 A PostgreSQL SQL syntax beautifier.  This is a wrapper for [darold/pgFormatter](https://github.com/darold/pgFormatter) and requires Perl to be available.
 
-## Install
+## Examples
+
+### Module
 
 ```
 npm install @bradymholt/pgformatter 
 ```
-
-## Examples
-
-### Module
 
 ```
 import { formatSql } from "@bradymholt/pgformatter";
@@ -28,7 +26,7 @@ FROM
 ### CLI
 
 ```
-npx pgformatter --write --spaces=2 query.sql
+npx @bradymholt/pgformatter --write --spaces=2 query.sql
 
 query.sql [32ms]
 ```
