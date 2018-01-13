@@ -14,13 +14,13 @@
   ],
   "author": "Brady Holt",
   "license": "MIT",
-  "homepage": "https://github.com/bradymholt/pg-formatter-js#readme",
+  "homepage": "https://github.com/bradymholt/pgformatter#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/bradymholt/pg-formatter-js.git"
+    "url": "git+https://github.com/bradymholt/pgformatter.git"
   },
   "bugs": {
-    "url": "https://github.com/bradymholt/pg-formatter-js/issues"
+    "url": "https://github.com/bradymholt/pgformatter/issues"
   },
   "files": [
     "dist/"
