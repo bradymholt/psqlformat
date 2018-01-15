@@ -1,4 +1,6 @@
 -- This is a comment
-select id, first_name
-From
-people
+SELECT
+    id,
+    first_name
+FROM
+    people

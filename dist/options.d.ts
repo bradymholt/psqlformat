@@ -1,5 +1,4 @@
 export interface IOptions {
-    write?: boolean;
     spaces?: number;
     maxLength?: number;
     commaStart?: boolean;

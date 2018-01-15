@@ -15,7 +15,7 @@ FROM
   });
 
   it("returns formatted SQL given a file path", function() {
-    let output = formatFiles(queryFilePath, { noComment: true, spaces: 2 });
+    let output = formatFiles(queryFilePath, false, { noComment: true, spaces: 2 });
     expect(output).to.equal(`\
 SELECT
   id,
@@ -33,7 +33,7 @@ FROM
     let testLog = function(message: string) {
       logContents += message;
     };
-    let output = formatFiles(tmpFile, { write: true, noComment: true, spaces: 3 }, testLog);
+    let output = formatFiles(tmpFile, true, { noComment: true, spaces: 3 }, testLog);
 
     const updatedContents = fs.readFileSync(tmpFile, { encoding: "utf-8" });
 

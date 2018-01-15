@@ -11,6 +11,7 @@ import { IOptions, CaseOptionEnum } from "./options";
  */
 export function formatFiles(
   filesOrGlobs: string | string[],
+  editInPlace: boolean,
   options: IOptions = {},
   log: (text: string) => void = console.log
 ) {
@@ -29,7 +30,7 @@ export function formatFiles(
 
     formatted += output;
 
-    if (options.write) {
+    if (editInPlace) {
       // Override file with formatted SQL and log progress
       fs.writeFileSync(path, output);
       log(`${path} [${elapsedTimeMs}ms]`);

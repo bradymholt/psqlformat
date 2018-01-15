@@ -9,25 +9,25 @@ const child_process_1 = require("child_process");
  * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
  * @param options
  */
-function formatFiles(filesOrGlobs, options = {}, log = console.log) {
+function formatFiles(filesOrGlobs, editInPlace, options = {}, log = console.log) {
     let paths = globby.sync(filesOrGlobs);
-    let output = "";
+    let formatted = "";
     for (let path of paths) {
         let startTime = process.hrtime();
         let command = `${buildCommand(options)} ${path}`;
         // Run pgFormatter
-        let formatted = child_process_1.execSync(command, {
+        let output = child_process_1.execSync(command, {
             encoding: "utf8"
         });
         const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
-        output += formatted;
-        if (options.write) {
+        formatted += output;
+        if (editInPlace) {
             // Override file with formatted SQL and log progress
-            fs.writeFileSync(path, formatted);
+            fs.writeFileSync(path, output);
             log(`${path} [${elapsedTimeMs}ms]`);
         }
     }
-    return output;
+    return formatted;
 }
 exports.formatFiles = formatFiles;
 /**

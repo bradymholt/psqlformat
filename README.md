@@ -74,14 +74,45 @@ psqlformat can also be used as a module so that it can be integrated into an exi
 npm install psqlformat
 ```
 
-Then, require it with `require("psqlformat")` and use either the `formatSql` or `formatFiles` method:
+Then, require it with `require("psqlformat")` and use either the `formatSql` or `formatFiles` method.  Here are the method signatures in TypeScript declaration file format:
 
+```
+/**
+ *
+ * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
+ * @param options
+ */
+export declare function formatFiles(filesOrGlobs: string | string[], editInPlace: boolean, options?: IOptions, log?: (text: string) => void): string;
+
+/**
+ * Format SQL
+ * @param sqlText The SQL to be formatted
+ * @param options
+ */
+export declare function formatSql(sqlText: string, options?: IOptions): string;
+
+```
+
+Example usage:
 
 ```
 const psqlformat = require("psqlformat");
 
 // Format SQL text
-let formatted = psqlformat.formatSql("select id from people", { spaces: 2 });
+let formatted = psqlformat.formatSql("select id from people", {
+  spaces: 2
+ 
+  /* Other available options:
+  maxLength
+  commaStart
+  commaEnd
+  noComment
+  functionCase
+  keywordCase
+  perlBinPath
+  */
+});
+
 console.log(formatted);
 
 /* Expected Output:
@@ -93,7 +124,9 @@ FROM
 
 // Format a file
 const path = require("path");
-psqlformat.formatFiles(path.resolve(__dirname, "query.sql"), { write: true, spaces: 3 });
+psqlformat.formatFiles(path.resolve(__dirname, "query.sql"), true, {    
+  spaces: 3 
+});
 
 // query.sql file should have been edited in-place.
 ```

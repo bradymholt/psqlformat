@@ -57,6 +57,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
     })
         .demandCommand(1, "").argv;
     const filesOrGlobs = parsedArguments._;
+    const write = parsedArguments.write;
     const options = parsedArguments;
     // Convert option strings to enums
     if (parsedArguments.functionCase != null) {
@@ -65,8 +66,8 @@ By default, output is written to stdout. (use --write option to edit files in-pl
     if (parsedArguments.keywordCase != null) {
         options.keywordCase = options_1.CaseOptionEnum[parsedArguments.keywordCase];
     }
-    let output = index_1.formatFiles(filesOrGlobs, options, log);
-    if (!options.write) {
+    let output = index_1.formatFiles(filesOrGlobs, write, options, log);
+    if (!write) {
         log(output);
     }
 }
