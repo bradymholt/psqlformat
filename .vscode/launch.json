@@ -19,7 +19,13 @@
             "type": "node",
             "request": "launch",
             "name": "Tests",
-            "program": "${workspaceFolder}/node_modules/.bin/_mocha"
+            "program": "${workspaceFolder}/node_modules/.bin/_mocha",
+            "args": [
+                "--require",
+                "ts-node/register",
+                "--recursive",
+                " ./test/*.ts"
+            ]
 
         }
 
