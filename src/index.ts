@@ -55,7 +55,7 @@ export function formatSql(sqlText: string, options: IOptions = {}) {
   return formatted;
 }
 
-export { IOptions } from "./options";
+export { IOptions, CaseOptionEnum } from "./options";
 
 export function buildCommand(options: IOptions) {
   let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
