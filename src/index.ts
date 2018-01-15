@@ -15,28 +15,28 @@ export function formatFiles(
   log: (text: string) => void = console.log
 ) {
   let paths = globby.sync(filesOrGlobs);
-  let output = "";
+  let formatted = "";
 
   for (let path of paths) {
     let startTime = process.hrtime();
     let command = `${buildCommand(options)} ${path}`;
     // Run pgFormatter
-    let formatted = execSync(command, {
+    let output = execSync(command, {
       encoding: "utf8"
     });
 
     const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
 
-    output += formatted;
+    formatted += output;
 
     if (options.write) {
       // Override file with formatted SQL and log progress
-      fs.writeFileSync(path, formatted);
+      fs.writeFileSync(path, output);
       log(`${path} [${elapsedTimeMs}ms]`);
     }
   }
 
-  return output;
+  return formatted;
 }
 
 /**
