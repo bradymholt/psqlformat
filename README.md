@@ -1,4 +1,4 @@
-# psqlformat
+# psqlformat [![Build Status](https://travis-ci.org/bradymholt/psqlformat.svg?branch=master)](https://travis-ci.org/bradymholt/psqlformat)
 
 A PostgreSQL SQL syntax beautifier.  This utility is a wrapper for [darold/psqlformat](https://github.com/darold/psqlformat) and requires Perl to be available.
 
