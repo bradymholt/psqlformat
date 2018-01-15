@@ -11,6 +11,6 @@ export declare function formatFiles(filesOrGlobs: string | string[], editInPlace
  * @param options
  */
 export declare function formatSql(sqlText: string, options?: IOptions): string;
-export { IOptions } from "./options";
+export { IOptions, CaseOptionEnum } from "./options";
 export declare function buildCommand(options: IOptions): string;
 export declare function buildCommandArguments(options: IOptions): string;

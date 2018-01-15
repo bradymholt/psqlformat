@@ -45,6 +45,8 @@ function formatSql(sqlText, options = {}) {
     return formatted;
 }
 exports.formatSql = formatSql;
+var options_1 = require("./options");
+exports.CaseOptionEnum = options_1.CaseOptionEnum;
 function buildCommand(options) {
     let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
     let commandArgs = buildCommandArguments(options);
