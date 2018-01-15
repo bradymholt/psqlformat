@@ -58,6 +58,7 @@ FROM
     expect(output.logs[0]).to.contain(tmpFile);
 
     const updatedContents = fs.readFileSync(tmpFile, { encoding: "utf-8" });
+    fs.unlinkSync(tmpFile);
     expect(updatedContents).to.equal(`\
 SELECT
    id
@@ -65,7 +66,5 @@ SELECT
 FROM
    people
 `);
-
-    fs.unlinkSync(tmpFile);
   });
 });

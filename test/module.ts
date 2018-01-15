@@ -36,7 +36,9 @@ FROM
     let output = formatFiles(tmpFile, { write: true, noComment: true, spaces: 3 }, testLog);
 
     const updatedContents = fs.readFileSync(tmpFile, { encoding: "utf-8" });
-    
+
+    fs.unlinkSync(tmpFile);
+
     expect(logContents).to.contain(tmpFile);
     expect(updatedContents).to.equal(`\
 SELECT
@@ -45,7 +47,5 @@ SELECT
 FROM
    people
 `);
-
-    fs.unlinkSync(tmpFile);
   });
 });
