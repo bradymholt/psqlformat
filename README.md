@@ -20,7 +20,7 @@ Examples:
 
 ```
 psqlformat --write --spaces=2 query.sql
-psqlformat --commandEnd --spaces=4 db/*.sql
+psqlformat --commaEnd --spaces=4 db/*.sql
 ```
 
 When passing a glob as a parameter, it will be expanded by your shell.  If you want to use node glob syntax, you have to quote your parameter (using double quotes if you need it to run in Windows), as follows:
