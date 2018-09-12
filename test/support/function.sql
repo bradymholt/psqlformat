@@ -1,0 +1,1 @@
+PERFORM my_nifty_function(id, name);
