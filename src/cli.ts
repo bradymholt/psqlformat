@@ -1,7 +1,6 @@
 import * as yargs from "yargs";
 import { formatFiles } from "./index";
 import { IOptions, CaseOptionEnum } from "./options";
-import { Options } from "yargs";
 
 function exec(args: any, log: (text: string) => void = console.log) {
   let parsedArguments = yargs(args)
