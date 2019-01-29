@@ -55,6 +55,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
         describe: "Case of the reserved keywords"
       },
+      formatType: {
+        type: "boolean",
+        describe: "Use another formatting type for some statements"
+      },
       perlBinPath: {
         type: "string",
         default: "perl",

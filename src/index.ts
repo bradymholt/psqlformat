@@ -97,5 +97,9 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += ` --keyword-case ${options.keywordCase}`;
   }
 
+  if (options.formatType != null) {
+    commandArgs += ` --format-type`;
+  }
+
   return commandArgs;
 }

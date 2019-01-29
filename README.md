@@ -64,6 +64,7 @@ Options:
   --keywordCase   Case of the reserved keywords
          [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
                                                           [default: "uppercase"]
+  --formatType    Use another formatting type for some statements      [boolean]
   --perlBinPath   The path to the perl executable     [string] [default: "perl"]
 ```
 
@@ -111,6 +112,7 @@ let formatted = psqlformat.formatSql("select id from people", {
   noComment
   functionCase
   keywordCase
+  formatType
   perlBinPath
   */
 });

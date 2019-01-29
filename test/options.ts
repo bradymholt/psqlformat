@@ -41,6 +41,10 @@ describe("options", function() {
     expect(buildCommandArguments({ spaces: 6 })).to.contain("--spaces 6");
   });
 
+  it("formatType", function() {
+    expect(buildCommandArguments({ formatType: true })).to.contain("--format-type");
+  });
+
   it("perlBinPath", function() {
     expect(buildCommand({ perlBinPath: '/usr/bin/custom' })).contain("/usr/bin/custom");
     expect(buildCommand({ perlBinPath: '/usr/bin/custom' })).to.not.contain("perl");
