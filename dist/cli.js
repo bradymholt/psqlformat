@@ -28,6 +28,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             type: "boolean",
             describe: "Use preceding comma in parameter list"
         },
+        commaBreak: {
+            type: "boolean",
+            describe: "In insert statement, add a newline after each comma"
+        },
         commaEnd: {
             type: "boolean",
             default: true,
@@ -49,6 +53,14 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
             describe: "Case of the reserved keywords"
         },
+        formatType: {
+            type: "boolean",
+            describe: "Use another formatting type for some statements"
+        },
+        placeholder: {
+            type: "string",
+            describe: "Regex to find code that must not be changed"
+        },
         perlBinPath: {
             type: "string",
             default: "perl",
@@ -57,7 +69,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
     })
         .demandCommand(1, "").argv;
     const filesOrGlobs = parsedArguments._;
-    const write = parsedArguments.write;
+    const write = parsedArguments.write || false;
     const options = parsedArguments;
     // Convert option strings to enums
     if (parsedArguments.functionCase != null) {

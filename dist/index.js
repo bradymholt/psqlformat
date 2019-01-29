@@ -67,6 +67,9 @@ function buildCommandArguments(options) {
     else if (options.commaEnd) {
         commandArgs += " --comma-end";
     }
+    if (options.commaBreak) {
+        commandArgs += " --comma-break";
+    }
     if (options.noComment) {
         commandArgs += " --nocomment";
     }
@@ -75,6 +78,12 @@ function buildCommandArguments(options) {
     }
     if (options.keywordCase != null) {
         commandArgs += ` --keyword-case ${options.keywordCase}`;
+    }
+    if (options.formatType != null) {
+        commandArgs += ` --format-type`;
+    }
+    if (options.placeholder != null) {
+        commandArgs += ` --placeholder ${options.placeholder}`;
     }
     return commandArgs;
 }
