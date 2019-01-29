@@ -45,6 +45,10 @@ describe("options", function() {
     expect(buildCommandArguments({ formatType: true })).to.contain("--format-type");
   });
 
+  it("placeholder", function() {
+    expect(buildCommandArguments({ placeholder: "/test123/" })).to.contain("--placeholder /test123/");
+  });
+
   it("perlBinPath", function() {
     expect(buildCommand({ perlBinPath: '/usr/bin/custom' })).contain("/usr/bin/custom");
     expect(buildCommand({ perlBinPath: '/usr/bin/custom' })).to.not.contain("perl");

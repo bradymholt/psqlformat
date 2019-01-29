@@ -101,5 +101,9 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += ` --format-type`;
   }
 
+  if (options.placeholder != null) {
+    commandArgs += ` --placeholder ${options.placeholder}`;
+  }
+
   return commandArgs;
 }

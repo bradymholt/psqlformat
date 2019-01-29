@@ -9,6 +9,7 @@ export interface IOptions {
   functionCase?: CaseOptionEnum;
   keywordCase?: CaseOptionEnum;
   formatType?: boolean;
+  placeholder?: string;
 
   perlBinPath?: string;
 }
