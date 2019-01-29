@@ -11,6 +11,10 @@ describe("options", function() {
     expect(buildCommandArguments({ commaStart: true })).to.contain("--comma-start");
   });
 
+  it("commaBreak", function() {
+    expect(buildCommandArguments({ commaBreak: true })).to.contain("--comma-break");
+  });
+
   it("commaEnd", function() {
     expect(buildCommandArguments({ commaEnd: true })).to.contain("--comma-end");
   });
