@@ -64,7 +64,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
     .demandCommand(1, "").argv;
 
   const filesOrGlobs = parsedArguments._;
-  const write = parsedArguments.write;
+  const write = parsedArguments.write || false;
   const options: IOptions = <any>parsedArguments;
 
   // Convert option strings to enums

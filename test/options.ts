@@ -3,6 +3,10 @@ import { buildCommandArguments, buildCommand } from "../src/index";
 import { expect } from "chai";
 
 describe("options", function() {
+  it("write", function() {
+    expect(buildCommandArguments({ write: true })).to.not.contain("write");    
+  });
+  
   it("commaStart", function() {
     expect(buildCommandArguments({ commaStart: true })).to.contain("--comma-start");
   });
