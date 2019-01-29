@@ -3,7 +3,7 @@ import * as process from "process";
 // Pulled and adapted from https://github.com/yargs/yargs/blob/master/test/helpers/utils.js
 // This method runs a function and captures console output and whether process.exit was called.
 
-export function checkOutput(f, argv = global.process.argv) {
+export function checkOutput(f:()=>void, argv = global.process.argv) {
   let exit = false;
   var process: any = global.process;
 
@@ -19,24 +19,24 @@ export function checkOutput(f, argv = global.process.argv) {
 
   process.argv = argv;
 
-  const errors = [];
-  const logs = [];
-  const warnings = [];
+  const errors:Array<string> = [];
+  const logs:Array<string> = [];
+  const warnings:Array<string> = [];
 
-  console.error = msg => {
+  console.error = (msg:string) => {
     errors.push(msg);
   };
-  console.log = msg => {
+  console.log = (msg:string) => {
     logs.push(msg);
   };
-  console.warn = msg => {
+  console.warn = (msg:string) => {
     warnings.push(msg);
   };
 
-  let result;
+  let result:string;
 
   try {
-    result = f();
+    f();
   } finally {
     reset();
   }
@@ -59,8 +59,7 @@ export function checkOutput(f, argv = global.process.argv) {
       errors,
       logs,
       warnings,
-      exit,
-      result
+      exit      
     };
   }
 }
