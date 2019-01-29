@@ -11,6 +11,10 @@ describe("options", function() {
     expect(buildCommandArguments({ commaStart: true })).to.contain("--comma-start");
   });
 
+  it("commaBreak", function() {
+    expect(buildCommandArguments({ commaBreak: true })).to.contain("--comma-break");
+  });
+
   it("commaEnd", function() {
     expect(buildCommandArguments({ commaEnd: true })).to.contain("--comma-end");
   });
@@ -35,6 +39,14 @@ describe("options", function() {
 
   it("spaces", function() {
     expect(buildCommandArguments({ spaces: 6 })).to.contain("--spaces 6");
+  });
+
+  it("formatType", function() {
+    expect(buildCommandArguments({ formatType: true })).to.contain("--format-type");
+  });
+
+  it("placeholder", function() {
+    expect(buildCommandArguments({ placeholder: "/test123/" })).to.contain("--placeholder /test123/");
   });
 
   it("perlBinPath", function() {

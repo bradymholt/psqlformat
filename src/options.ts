@@ -8,6 +8,8 @@ export interface IOptions {
   noComment?: boolean;
   functionCase?: CaseOptionEnum;
   keywordCase?: CaseOptionEnum;
+  formatType?: boolean;
+  placeholder?: string;
 
   perlBinPath?: string;
 }
