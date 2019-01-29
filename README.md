@@ -55,6 +55,7 @@ Options:
   --spaces        Number of spaces to indent the code      [number] [default: 4]
   --maxLength     Maximum length of a query                             [number]
   --commaStart    Use preceding comma in parameter list                [boolean]
+  --commaBreak    In insert statement, add a newline after each comma  [boolean]
   --commaEnd      Use trailing comma in parameter list [boolean] [default: true]
   --noComment     Remove any comments                                  [boolean]
   --functionCase  Case of the function names
@@ -105,6 +106,7 @@ let formatted = psqlformat.formatSql("select id from people", {
   /* Other available options:
   maxLength
   commaStart
+  commaBreak
   commaEnd
   noComment
   functionCase
