@@ -79,7 +79,7 @@ function buildCommandArguments(options) {
     if (options.keywordCase != null) {
         commandArgs += ` --keyword-case ${options.keywordCase}`;
     }
-    if (options.formatType != null) {
+    if (options.formatType) {
         commandArgs += ` --format-type`;
     }
     if (options.placeholder != null) {
