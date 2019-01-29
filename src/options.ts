@@ -2,6 +2,7 @@ export interface IOptions {
   spaces?: number;
   maxLength?: number;
   commaStart?: boolean;
+  commaBreak?: boolean;
   commaEnd?: boolean;
   noComment?: boolean;
   functionCase?: CaseOptionEnum;

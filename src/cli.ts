@@ -30,6 +30,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         type: "boolean",
         describe: "Use preceding comma in parameter list"
       },
+      commaBreak: {
+        type: "boolean",
+        describe: "In insert statement, add a newline after each comma"
+      },
       commaEnd: {
         type: "boolean",
         default: true,

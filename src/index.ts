@@ -81,6 +81,10 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += " --comma-end";
   }
 
+  if (options.commaBreak) {
+    commandArgs += " --comma-break";
+  }
+
   if (options.noComment) {
     commandArgs += " --nocomment";
   }
