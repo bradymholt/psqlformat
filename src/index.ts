@@ -2,7 +2,7 @@ import * as path from "path";
 import * as fs from "fs";
 import * as globby from "globby";
 import { execSync } from "child_process";
-import { IOptions, CaseOptionEnum } from "./options";
+import { IOptions } from "./options";
 
 /**
  *
