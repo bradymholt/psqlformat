@@ -15,12 +15,12 @@ pgFormatter::CLI - Implementation of command line program to format SQL queries.
 
 =head1 VERSION
 
-Version 3.3
+Version 4.0
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '3.3';
+our $VERSION = '4.0';
 
 use autodie;
 use pgFormatter::Beautify;
@@ -65,6 +65,10 @@ sub run {
     $self->load_sql();
     $self->logmsg( 'DEBUG', 'Beautifying' );
     $self->beautify();
+    if ($self->{'wrap_limit'}) {
+	    $self->logmsg( 'DEBUG', 'Wrap query' );
+	    $self->wrap_lines();
+    }
     $self->logmsg( 'DEBUG', 'Writing output' );
     $self->save_output();
     return;
@@ -91,6 +95,8 @@ sub beautify {
     $args{ 'format' }       = $self->{ 'cfg' }->{ 'format' };
     $args{ 'maxlength' }    = $self->{ 'cfg' }->{ 'maxlength' };
     $args{ 'format_type' }  = $self->{ 'cfg' }->{ 'format-type' };
+    $args{ 'wrap_limit' }   = $self->{ 'cfg' }->{ 'wrap-limit' };
+    $args{ 'wrap_after' }   = $self->{ 'cfg' }->{ 'wrap-after' };
 
     if ($self->{ 'query' } && ($args{ 'maxlength' } && length($self->{ 'query' }) > $args{ 'maxlength' })) {
         $self->{ 'query' } = substr($self->{ 'query' }, 0, $args{ 'maxlength' })
@@ -100,6 +106,10 @@ sub beautify {
     $beautifier->query( $self->{ 'query' } );
     $beautifier->anonymize() if $self->{ 'cfg' }->{ 'anonymize' };
     $beautifier->beautify();
+    if ($self->{ 'cfg' }->{ 'wrap-limit' }) {
+	    $self->logmsg( 'DEBUG', 'Wrap query' );
+	    $beautifier->wrap_lines();
+    }
 
     $self->{ 'ready' } = $beautifier->content();
 
@@ -114,7 +124,14 @@ Saves beautified query to whatever is output filehandle
 
 sub save_output {
     my $self = shift;
-    my $fh   = delete $self->{ 'output' };
+    my $fh;
+    # Thanks to "autodie" I don't have to check if open() worked.
+    if ( $self->{ 'cfg' }->{ 'output' } ne '-' ) {
+        $self->logmsg( 'DEBUG', 'Formatted SQL queries will be written to stdout' );
+        open $fh, '>', $self->{ 'cfg' }->{ 'output' };
+    } else {  
+    	$fh = \*STDOUT;
+    }
     print $fh $self->{ 'ready' };
     close $fh;
     return;
@@ -190,6 +207,9 @@ Options:
                             uppercase: 2. Values: 0=>unchanged, 1=>lowercase,
                             2=>uppercase, 3=>capitalize.
     -v | --version        : show pg_format version and exit.
+    -w | --wrap-limit N   : wrap queries at a certain length.
+    -W | --wrap-after N   : number of column after which lists must be wrapped.
+                            Default: puts every item on its own line.
 
 Examples:
 
@@ -217,7 +237,12 @@ Loads SQL from input file or stdin.
 sub load_sql {
     my $self = shift;
     local $/ = undef;
-    my $fh = delete $self->{ 'input' };
+    my $fh;
+    if ( $self->{ 'cfg' }->{ 'input' } ne '-' ) {
+        open $fh, '<', $self->{ 'cfg' }->{ 'input' };
+    } else {
+        $fh = \*STDIN;
+    }
     $self->{ 'query' } = <$fh>;
     close $fh;
     return;
@@ -250,6 +275,8 @@ sub get_command_line_args {
         'format-type|t!',
         'keyword-case|u=i',
         'version|v!',
+        'wrap-limit|w=i',
+        'wrap-after|W=i',
     );
 
     $self->show_help_and_die( 1 ) unless GetOptions( \%cfg, @options );
@@ -269,7 +296,9 @@ sub get_command_line_args {
     $cfg{ 'format' }        //= 'text';
     $cfg{ 'comma-break' }   //= 0;
     $cfg{ 'maxlength' }     //= 0;
-    $cfg{ 'format_type' }   //= 0;
+    $cfg{ 'format-type' }   //= 0;
+    $cfg{ 'wrap-limit' }    //= 0;
+    $cfg{ 'wrap-after' }    //= 0;
 
     if (!grep(/^$cfg{ 'format' }$/i, 'text', 'html')) {
         printf 'FATAL: unknow output format: %s%s', $cfg{ 'format' } , "\n";
@@ -294,25 +323,6 @@ sub validate_args {
     $self->show_help_and_die( 2, 'function-case can be only one of: 0, 1, 2, or 3.' ) unless $self->{ 'cfg' }->{ 'function-case' } =~ m{\A[0123]\z};
     $self->show_help_and_die( 2, 'keyword-case can be only one of: 0, 1, 2, or 3.' )  unless $self->{ 'cfg' }->{ 'keyword-case' } =~ m{\A[0123]\z};
 
-    # Thanks to "autodie" I don't have to check if open() worked.
-    if ( $self->{ 'cfg' }->{ 'input' } eq '-' ) {
-        $self->{ 'input' } = \*STDIN;
-    }
-    else {
-        open my $fh, '<', $self->{ 'cfg' }->{ 'input' };
-        $self->{ 'input' } = $fh;
-    }
-
-    if ( $self->{ 'cfg' }->{ 'output' } eq '-' ) {
-        $self->logmsg( 'DEBUG', 'Formatted SQL queries will be written to stdout' );
-        $self->{ 'output' } = \*STDOUT;
-    }
-    else {
-        $self->logmsg( 'DEBUG', 'Formatted SQL queries will be written to %s', $self->{ 'cfg' }->{ 'output' } );
-        open my $fh, '>', $self->{ 'cfg' }->{ 'output' };
-        $self->{ 'output' } = $fh;
-    }
-
     if ($self->{ 'cfg' }->{ 'comma-end' }) {
         $self->{ 'cfg' }->{ 'comma' } = 'end';
     }
@@ -333,7 +343,7 @@ Please report any bugs or feature requests to: https://github.com/darold/pgForma
 
 =head1 COPYRIGHT
 
-Copyright 2012-2018 Gilles Darold. All rights reserved.
+Copyright 2012-2019 Gilles Darold. All rights reserved.
 
 =head1 LICENSE
 
