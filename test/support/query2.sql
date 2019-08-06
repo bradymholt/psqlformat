@@ -1,4 +1,4 @@
-/* This is a comment */
+-- This is a comment
 SELECT
     id,
     first_name

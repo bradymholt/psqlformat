@@ -22,7 +22,7 @@ describe("CLI", function() {
 
     expect(output.errors).to.be.empty;
     expect(output.logs[0]).to.equal(`\
--- This is a comment
+/* This is a comment */
 SELECT
     id,
     first_name
