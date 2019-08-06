@@ -15,7 +15,7 @@ function formatFiles(filesOrGlobs, editInPlace, options = {}, log = console.log)
     for (let path of paths) {
         let startTime = process.hrtime();
         let command = `${buildCommand(options)} ${path}`;
-        // Run pgFormatter
+        // Run pgFormatter    
         let output = child_process_1.execSync(command, {
             encoding: "utf8"
         });
