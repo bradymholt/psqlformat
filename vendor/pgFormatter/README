@@ -3,12 +3,12 @@ NAME
 
 DESCRIPTION
     This SQL formatter/beautifier supports keywords from SQL-92, SQL-99,
-    SQL-2003, SQL-2008, SQL-2011 and PostgreSQL specifics keywords. May
-    works with any other databases too.
+    SQL-2003, SQL-2008, SQL-2011 and PostgreSQL specifics keywords. Works
+    with any other databases too.
 
     pgFormatter can work as a console program or as a CGI. It will
-    automatically detect his environment and output as text or as HTML
-    following the context.
+    automatically detect its environment and format output as text or as
+    HTML following the context.
 
     Keywords highlighting will only be available in CGI context.
 
@@ -36,6 +36,8 @@ DESCRIPTION
                                 unchanged: 0. Values: 0=>unchanged, 1=>lowercase,
                                 2=>uppercase, 3=>capitalize.
         -F | --format STR     : output format: text or html. Default: text.
+        -g | --nogrouping     : add a newline between statements in transaction
+                                regroupement. Default is to group statements.
         -h | --help           : show this message and exit.
         -m | --maxlength SIZE : maximum length of a query, it will be cutted above
                                 the given size. Default: no truncate.
@@ -45,6 +47,8 @@ DESCRIPTION
         -s | --spaces size    : change space indent, default 4 spaces.
         -S | --separator STR  : dynamic code separator, default to single quote.
         -t | --format-type    : try another formatting type for some statements.
+        -T | --tabs           : use tabs instead of space characters, when used
+                                spaces is set to 1 whatever is the value set to -s.
         -u | --keyword-case N : Change the case of the reserved keyword. Default is
                                 uppercase: 2. Values: 0=>unchanged, 1=>lowercase,
                                 2=>uppercase, 3=>capitalize.
@@ -138,6 +142,30 @@ SPECIAL FORMATTING
       * new line in PUBLICATION and POLICY DDL
 
     Expect this list grow following alternative thoughts.
+
+  Option -g, --no-grouping
+    By default pgFormatter groups all statements when they are in a
+    transaction:
+
+        BEGIN;
+        INSERT INTO foo VALUES (1, 'text 1');
+        INSERT INTO foo VALUES (2, 'text 2');
+        ...
+        COMMIT;
+
+    By disabling grouping of statement pgFormatter will always add an extra
+    newline characters between statements just like outside a transaction:
+
+        BEGIN;
+
+        INSERT INTO foo VALUES (1, 'text 1');
+
+        INSERT INTO foo VALUES (2, 'text 2');
+        ...
+
+        COMMIT;
+
+    This might add readability to not DML transactions.
 
 HINTS
   Formatting from VI

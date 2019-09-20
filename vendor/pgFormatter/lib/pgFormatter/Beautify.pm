@@ -18,12 +18,12 @@ pgFormatter::Beautify - Library for pretty-printing SQL queries
 
 =head1 VERSION
 
-Version 4.0
+Version 4.1
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '4.1dev';
+our $VERSION = '4.1';
 
 # Inclusion of code from Perl package SQL::Beautify
 # Copyright (C) 2009 by Jonas Kramer
@@ -99,6 +99,8 @@ Takes options as hash. Following options are recognized:
 
 =item * no_comments - if set to true comments will be removed from query
 
+=item * no_grouping - if set to true statements will not be grouped in a transaction, an extra newline character will be added between statements like outside a transaction.
+
 =item * placeholder - use the specified regex to find code that must not be changed in the query.
 
 =item * query - query to beautify
@@ -148,7 +150,7 @@ sub new {
     my $self = bless {}, $class;
     $self->set_defaults();
 
-    for my $key ( qw( query spaces space break wrap keywords functions rules uc_keywords uc_functions no_comments placeholder separator comma comma_break format colorize format_type wrap_limit wrap_after) ) {
+    for my $key ( qw( query spaces space break wrap keywords functions rules uc_keywords uc_functions no_comments no_grouping placeholder separator comma comma_break format colorize format_type wrap_limit wrap_after) ) {
         $self->{ $key } = $options{ $key } if defined $options{ $key };
     }
 
@@ -206,7 +208,9 @@ sub query {
     my @temp_content = split(/(CREATE(?:\s+OR\s+REPLACE)?\s+(?:FUNCTION|PROCEDURE)\s+)/i, $self->{ 'query' });
     if ($#temp_content > 0) {
         for (my $j = 0; $j <= $#temp_content; $j++) {
-            next if ($temp_content[$j] =~ /^CREATE/i);
+            next if ($temp_content[$j] =~ /^CREATE/i or $temp_content[$j] eq '');
+	    # Rewrite single quote code delimiter into $$
+	    $temp_content[$j] =~ s/(\s+AS\s+)'(\s+.*?;\s*)'/$1\$\$$2\$\$/is;
 	    # Remove any call too CREATE/DROP LANGUAGE to not break search of function code separator
 	    $temp_content[$j] =~ s/(CREATE|DROP)\s+LANGUAGE\s+[^;]+;.*//is;
 	    # Fix case where code separator with $ is associated to begin/end keywords
@@ -245,6 +249,9 @@ sub query {
     }
     $self->{ 'query' } = join('', @temp_content);
 
+    # Replace any \' by %BSLH%
+    $self->{ 'query' } =~ s/\\'/PGFBSLHQ/g;
+
     # Store values of code that must not be changed following the given placeholder
     if ($self->{ 'placeholder' }) {
         while ( $self->{ 'query' } =~ s/($self->{ 'placeholder' })/PLACEHOLDER${i}PLACEHOLDER/) {
@@ -258,6 +265,9 @@ sub query {
 
     # Replace operator with placeholder
     $self->_quote_operator( \$self->{ 'query' } );
+
+    # Replace comment with not quote delimiter with placeholder
+    $self->_quote_comment_stmt( \$self->{ 'query' } );
 
     return $self->{ 'query' };
 }
@@ -285,12 +295,18 @@ sub content
     # Replace placeholders with their original operator
     $self->_restore_operator( \$self->{ 'content' } );
 
+    # Replace placeholders with their original string
+    $self->_restore_comment_stmt( \$self->{ 'content' } );
+
     # Replace placeholders by their original values
     if ($#{ $self->{ 'placeholder_values' } } >= 0)
     {
         $self->{ 'content' } =~ s/PLACEHOLDER(\d+)PLACEHOLDER/$self->{ 'placeholder_values' }[$1]/igs;
         $self->{ 'content' } =~ s/CODEPART(\d+)CODEPART/$self->{ 'placeholder_values' }[$1]/igs;
     }
+
+    # Replace any %BSLH% by \'
+    $self->{ 'content' } =~ s/PGFBSLHQ/\\'/g;
 
     return $self->{ 'content' };
 }
@@ -435,6 +451,8 @@ sub tokenize_sql {
                 |
                 \"\"(?!\"")             # empty double quoted string
                 |
+                '[^']+'(?!')            # anyhing into single quoted string
+                |
                 "(?>(?:(?>[^"\\]+)|""|\\.)*)+" # anything inside double quotes, ungreedy
                 |
                 `(?>(?:(?>[^`\\]+)|``|\\.)*)+` # anything inside backticks quotes, ungreedy
@@ -459,6 +477,7 @@ sub tokenize_sql {
 
     my @query = ();
     @query = grep { /\S/ } $query =~ m{$re}smxg;
+    map { s/(.*PGFBSLHQ)$/'$1/; } @query;
     $self->{ '_tokens' } = \@query;
 
     return @query;
@@ -552,6 +571,14 @@ sub beautify {
 	if (lc($token) eq 'concat' && defined $self->_next_token() && $self->_next_token ne '(') {
 		$token = '||';
 	}
+	# Case where a keyword is used as a column name.
+        if ( $self->{ '_is_in_create' } > 1 and $self->_is_keyword( $token )
+			and defined $self->_next_token and $self->_is_type($self->_next_token))
+	{
+		$self->_add_token($token, $last);
+		$last = $token;
+		next;
+	}
 
         ####
         # Find if the current keyword is a known function name
@@ -631,7 +658,7 @@ sub beautify {
         ####
         if ($token =~ /^WITH$/i && (!defined $last || $last ne ')')
 		&& !$self->{ '_is_in_partition' } && !$self->{ '_is_in_publication' }
-		&& !$self->{ '_is_in_policy' })
+		&& !$self->{ '_is_in_policy' } && uc($self->_next_token) ne 'TIME')
 	{
 		$self->{ '_is_in_with' } = 1 if (!$self->{ '_is_in_using' } && uc($self->_next_token) ne 'ORDINALITY' && uc($last) ne 'START');
 		$self->{ 'no_break' } = 1 if (uc($self->_next_token) eq 'ORDINALITY');
@@ -996,7 +1023,7 @@ sub beautify {
 		$self->_over($token,$last);
                 $self->{ '_is_in_block' }++;
             }
-	    $self->{ '_is_in_work' } = 1 if (defined $self->_next_token && $self->_next_token =~ /^(WORK|TRANSACTION|ISOLATION|;)$/i);
+	    $self->{ '_is_in_work' } = 1 if (!$self->{ 'no_grouping' } and defined $self->_next_token && $self->_next_token =~ /^(WORK|TRANSACTION|ISOLATION|;)$/i);
             $last = $token;
             next;
         }
@@ -1327,13 +1354,13 @@ sub beautify {
         elsif ( $token eq ';' or $token =~ /^\\(?:g|crosstabview|watch)/ ) { # statement separator or executing psql meta command (prefix 'g' includes all its variants)
 
             $self->_add_token($token);
-
             if ($self->{ '_is_in_rule' }) {
 		$self->_back($token, $last);
 	    }
 	    elsif ($self->{ '_is_in_create' } && $self->{ '_is_in_block' } > -1)
 	    {
-	        $self->{ '_level' } = pop( @{ $self->{ '_level_stack' } } ) || 0;
+		#$self->{ '_level' } = pop( @{ $self->{ '_level_stack' } } ) || 0;
+	        pop( @{ $self->{ '_level_stack' } } );
 	    }
 
             # Initialize most of statement related variables
@@ -1401,11 +1428,10 @@ sub beautify {
 	    }
             $self->{ '_current_sql_stmt' } = '';
             $self->{ 'break' } = "\n" unless ( $self->{ 'spaces' } != 0 );
-            $self->_new_line($token,$last);
+            $self->_new_line($token,$last) if (uc($last) ne 'VALUES');
             # Add an additional newline after ; when we are not in a function
             if ($self->{ '_is_in_block' } == -1 and !$self->{ '_is_in_work' }
-			    and !$self->{ '_is_in_declare' })
-	    #and !$self->{ '_is_in_declare' } and !$self->{ '_fct_code_delimiter' })
+			    and !$self->{ '_is_in_declare' } and uc($last) ne 'VALUES')
 	    {
 		$self->{ '_new_line' } = 0;
                 $self->_new_line($token,$last);
@@ -1533,7 +1559,8 @@ sub beautify {
                 if (!$self->{ '_is_in_filter' } and ($token !~ /^SET$/i or !$self->{ '_is_in_index' }))
 		{
                     $self->_back($token, $last);
-		    $self->_new_line($token,$last) if (!$self->{ '_is_in_rule' });
+		    #$self->_new_line($token,$last) if (!$self->{ '_is_in_rule' });
+		    $self->_new_line($token,$last) if (!$self->{ '_is_in_rule' } and (uc($last) ne 'DEFAULT' or $self->_next_token() ne ';'));
                 }
             }
 	    else
@@ -1579,7 +1606,7 @@ sub beautify {
             }
             elsif ( !$self->{ '_is_in_over' } and !$self->{ '_is_in_filter' } and ($token !~ /^SET$/i or $self->{ '_current_sql_stmt' } eq 'UPDATE') )
 	    {
-                if (defined $self->_next_token and $self->_next_token ne '('
+                if (defined $self->_next_token and $self->_next_token !~ /\(|;/
 				and ($self->_next_token !~ /^(UPDATE|KEY|NO)$/i || uc($token) eq 'WHERE'))
 		{
                     $self->_new_line($token,$last) if (!$self->{ 'wrap_after' });
@@ -1994,26 +2021,29 @@ sub beautify {
 	     # special case with comment
 	     if ($token =~ /(?:\s*--)[\ \t\S]*/s)
 	     {
-		 $token =~ s/^(\s*)(--.*)/$2/s;
-		 my $start = $1 || '';
-		 if ($start =~ /\n/s) {
-                     $self->_new_line($token,$last), $self->_add_token('') if (defined $last and $last eq ';' and $self->{ 'content' } !~ /\n$/s);
-		     $self->_new_line($token,$last);
-		 }
-		 $token =~ s/\s+$//s;
-		 $token =~ s/^\s+//s;
-                 $self->_add_token( $token );
-                 $self->_new_line($token,$last) if ($start || $self->{ 'content' } !~ /\n/s);
-		 # Add extra newline after the last comment if we are not in a block or a statement
-		 if (defined $self->_next_token and $self->_next_token !~ /^\s*--/) {
-                     $self->{ 'content' } .= "\n" if ($self->{ '_is_in_block' } == -1
-				     and !$self->{ '_is_in_declare' } and !$self->{ '_fct_code_delimiter' }
-		                     and !$self->{ '_current_sql_stmt' }
-			     	     and defined $last and $self->_is_comment($last)
-		     		);
-		 }
-                 $last = $token;
-		 next;
+                 if ( !$self->{ 'no_comments' } )
+	         {
+                     $token =~ s/^(\s*)(--.*)/$2/s;
+                     my $start = $1 || '';
+                     if ($start =~ /\n/s) {
+                         $self->_new_line($token,$last), $self->_add_token('') if (defined $last and $last eq ';' and $self->{ 'content' } !~ /\n$/s);
+                         $self->_new_line($token,$last);
+                     }
+                     $token =~ s/\s+$//s;
+                     $token =~ s/^\s+//s;
+                     $self->_add_token( $token );
+                     $self->_new_line($token,$last) if ($start || $self->{ 'content' } !~ /\n/s);
+                     # Add extra newline after the last comment if we are not in a block or a statement
+                     if (defined $self->_next_token and $self->_next_token !~ /^\s*--/) {
+                         $self->{ 'content' } .= "\n" if ($self->{ '_is_in_block' } == -1
+                                         and !$self->{ '_is_in_declare' } and !$self->{ '_fct_code_delimiter' }
+                                         and !$self->{ '_current_sql_stmt' }
+                                              and defined $last and $self->_is_comment($last)
+                                         );
+                     }
+                     $last = $token;
+                 }    
+                 next;
 	     }
 
              if ($last =~ /^(?:SEQUENCE)$/i and $self->_next_token !~ /^(OWNED|;)$/i)
@@ -2104,6 +2134,7 @@ sub _add_token {
             $self->{ 'content' } .= $sp if ($last_token eq '(' && ($self->{ '_is_in_type' } or ($self->{ '_is_in_operator' } and !$self->_is_type($token))));
         } elsif ($token eq ')' and $self->{ '_is_in_block' } >= 0 && $self->{ '_is_in_create' }) {
                 $self->{ 'content' } .= $sp;
+	} else {
         }
         if ($self->_is_comment($token)) {
             my @lines = split(/\n/, $token);
@@ -2123,7 +2154,8 @@ sub _add_token {
     my $next_token = $self->_next_token || '';
 
     # lowercase/uppercase keywords taking care of function with same name
-    if ($self->_is_keyword( $token, $next_token, $last_token ) && (!$self->_is_function( $token ) || $next_token ne '(')) {
+    if ($self->_is_keyword( $token, $next_token, $last_token ) and (!$self->_is_type($self->_next_token) || $self->{ '_is_in_create' } < 2 || $self->{ '_is_in_create_function' }) # || $token =~ /^(BY|AS|VARIADIC)$/i)
+		    and (!$self->_is_function( $token ) || $next_token ne '(')) {
         $token = lc( $token )            if ( $self->{ 'uc_keywords' } == 1 );
         $token = uc( $token )            if ( $self->{ 'uc_keywords' } == 2 );
         $token = ucfirst( lc( $token ) ) if ( $self->{ 'uc_keywords' } == 3 );
@@ -2204,11 +2236,14 @@ Code lifted from SQL::Beautify
 sub _indent {
     my ( $self ) = @_;
 
-    if ( $self->{ '_new_line' } ) {
+    if ( $self->{ '_new_line' } )
+    {
         return $self->{ 'space' } x ( $self->{ 'spaces' } * ( $self->{ '_level' } // 0 ) );
     }
-    else {
-        return $self->{ 'space' };
+    # When this is not for identation force using space
+    else
+    {
+        return ' ';
     }
 }
 
@@ -2288,6 +2323,7 @@ Check if a token is a known SQL type
 sub _is_type {
     my ( $self, $token ) = @_;
 
+    $token =~ s/\s*\(.*//; # remove any parameter to the type
     return ~~ grep { $_ eq uc( $token ) } @{ $self->{ 'types' } };
 }
 
@@ -2613,6 +2649,8 @@ Currently defined defaults:
 
 =item no_comments => 0
 
+=item no_grouping => 0
+
 =item placeholder => ''
 
 =item separator => ''
@@ -2647,6 +2685,7 @@ sub set_defaults {
     $self->{ 'uc_keywords' }  = 0;
     $self->{ 'uc_functions' } = 0;
     $self->{ 'no_comments' }  = 0;
+    $self->{ 'no_grouping' }  = 0;
     $self->{ 'placeholder' }  = '';
     $self->{ 'keywords' }     = $self->{ 'dict' }->{ 'pg_keywords' };
     $self->{ 'types' }        = $self->{ 'dict' }->{ 'pg_types' };
@@ -2721,12 +2760,13 @@ sub set_dicts {
 	CALL GROUPS INCLUDE OTHERS PROCEDURES ROUTINE ROUTINES TIES READ_ONLY SHAREABLE READ_WRITE
         BASETYPE SFUNC STYPE SFUNC1 STYPE1 SSPACE FINALFUNC FINALFUNC_EXTRA FINALFUNC_MODIFY COMBINEFUNC SERIALFUNC DESERIALFUNC
        	INITCOND MSFUNC MINVFUNC MSTYPE MSSPACE MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY MINITCOND SORTOP
+	REFRESH MATERIALIZED
         );
 
     my @pg_types = qw(
-        BIGINT BIGSERIAL BIT BOOLEAN BOX BYTEA CHARACTER CIDR CIRCLE DATE DOUBLE INET INT INTEGER INTERVAL JSON
+        BIGINT BIGSERIAL BIT BOOLEAN BOX BYTEA CHARACTER CHAR CIDR CIRCLE DATE DOUBLE INET INT INTEGER INTERVAL JSON
         JSONB LINE LSEG MACADDR MACADDR8 MONEY NUMERIC PATH PG_LSN POINT POLYGON REAL SMALLINT SMALLSERIAL
-       	SERIAL TEXT TIME TIMESTAMP TSQUERY TSVECTOR TXID_SNAPSHOT UUID XML INT2 INT4 INT8 VARYING
+       	SERIAL TEXT TIME TIMESTAMP TSQUERY TSVECTOR TXID_SNAPSHOT UUID XML INT2 INT4 INT8 VARYING VARCHAR
 	);
 
     my @sql_keywords = map { uc } qw(
@@ -3217,6 +3257,41 @@ sub _restore_operator
 	}
 }
 
+=head2 _quote_comment_stmt
+
+Internal function used to replace constant in a COMMENT statement
+to be tokenized as a single word.
+The original values are restored with function _restore_comment_stmt().
+
+=cut
+
+sub _quote_comment_stmt
+{
+    my ($self, $str) = @_;
+
+    my $idx = 0;
+    while ($$str =~ s/(COMMENT\s+ON\s+(?:.*?)\s+IS)\s+(\$[^;]+?\$)\s*;/$1 PGF_CMTSTR$idx;/is) {
+        $self->{comment_str}{$idx} = $2;
+	$idx++;
+    }
+}
+
+=head2 _restore_comment_stmt
+
+Internal function used to restore comment string that was removed
+by the _quote_comment_stmt() method.
+
+=cut
+
+sub _restore_comment_stmt
+{
+        my ($self, $str) = @_;
+
+	if (exists $self->{comment_str}) {
+		$$str =~ s/PGF_CMTSTR(\d+)/$self->{comment_str}{$1}/igs;
+	}
+}
+
 =head2 _remove_comments
 
 Internal function used to remove comments in SQL code
@@ -3235,7 +3310,6 @@ sub _remove_comments
         $self->{'comments'}{"PGF_COMMENT${idx}A"} = $1;
         $idx++;
     }
-
     my @lines = split(/\n/, $self->{ 'content' });
     for (my $j = 0; $j <= $#lines; $j++) {
         $lines[$j] //= '';
@@ -3336,6 +3410,15 @@ sub wrap_lines
     return;
 }
 
+sub _dump_var
+{
+	my $self = shift;
+	foreach my $v (sort keys %{$self})
+	{
+		next if ($v !~ /^_/);
+		print STDERR "$v => $self->{$v}\n";
+	}
+}
 
 =head1 AUTHOR
 

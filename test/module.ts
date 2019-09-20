@@ -50,8 +50,7 @@ FROM
 `);
   });
 
-  // pgFormatter 4.0 does not properly remove `--` comments so skipping this test until that is fixed.
-  it.skip("formats a file with in-place and removes dash-dash comments", function() {
+  it("formats a file with in-place and removes dash-dash comments", function() {
     const tmpFile = "test/support/module_test.sql";
     fs.copyFileSync(queryFile2Path, tmpFile);
 

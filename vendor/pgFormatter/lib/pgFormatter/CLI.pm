@@ -15,12 +15,12 @@ pgFormatter::CLI - Implementation of command line program to format SQL queries.
 
 =head1 VERSION
 
-Version 4.0
+Version 4.1
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '4.0';
+our $VERSION = '4.1';
 
 use autodie;
 use pgFormatter::Beautify;
@@ -97,6 +97,8 @@ sub beautify {
     $args{ 'format_type' }  = $self->{ 'cfg' }->{ 'format-type' };
     $args{ 'wrap_limit' }   = $self->{ 'cfg' }->{ 'wrap-limit' };
     $args{ 'wrap_after' }   = $self->{ 'cfg' }->{ 'wrap-after' };
+    $args{ 'space' }        = $self->{ 'cfg' }->{ 'space' };
+    $args{ 'no_grouping' }  = $self->{ 'cfg' }->{ 'nogrouping' };
 
     if ($self->{ 'query' } && ($args{ 'maxlength' } && length($self->{ 'query' }) > $args{ 'maxlength' })) {
         $self->{ 'query' } = substr($self->{ 'query' }, 0, $args{ 'maxlength' })
@@ -194,6 +196,8 @@ Options:
                             unchanged: 0. Values: 0=>unchanged, 1=>lowercase,
                             2=>uppercase, 3=>capitalize.
     -F | --format STR     : output format: text or html. Default: text.
+    -g | --nogrouping     : add a newline between statements in transaction
+                            regroupement. Default is to group statements.
     -h | --help           : show this message and exit.
     -m | --maxlength SIZE : maximum length of a query, it will be cutted above
                             the given size. Default: no truncate.
@@ -203,6 +207,8 @@ Options:
     -s | --spaces size    : change space indent, default 4 spaces.
     -S | --separator STR  : dynamic code separator, default to single quote.
     -t | --format-type    : try another formatting type for some statements.
+    -T | --tabs           : use tabs instead of space characters, when used
+                            spaces is set to 1 whatever is the value set to -s.
     -u | --keyword-case N : Change the case of the reserved keyword. Default is
                             uppercase: 2. Values: 0=>unchanged, 1=>lowercase,
                             2=>uppercase, 3=>capitalize.
@@ -265,6 +271,7 @@ sub get_command_line_args {
         'debug|d!',
 	'format|F=s',
         'function-case|f=i',
+        'nogrouping|g!',
         'help|h!',
         'maxlength|m=i',
         'nocomment|n!',
@@ -273,6 +280,7 @@ sub get_command_line_args {
         'separator|S=s',
         'spaces|s=i',
         'format-type|t!',
+        'tabs|T!',
         'keyword-case|u=i',
         'version|v!',
         'wrap-limit|w=i',
@@ -299,6 +307,12 @@ sub get_command_line_args {
     $cfg{ 'format-type' }   //= 0;
     $cfg{ 'wrap-limit' }    //= 0;
     $cfg{ 'wrap-after' }    //= 0;
+    $cfg{ 'space' }         //= ' ';
+
+    if ($cfg{ 'tabs' }) {
+        $cfg{ 'spaces' } = 1;
+        $cfg{ 'space' }  = "\t";
+    }
 
     if (!grep(/^$cfg{ 'format' }$/i, 'text', 'html')) {
         printf 'FATAL: unknow output format: %s%s', $cfg{ 'format' } , "\n";
