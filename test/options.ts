@@ -4,7 +4,8 @@ import { expect } from "chai";
 
 describe("options", function() {
   it("write", function() {
-    expect(buildCommandArguments({ write: true })).to.not.contain("write");    
+    // write argument is not passed pgFormatter but is used internally
+    expect(buildCommandArguments({ write: true })).not.to.contain("write");    
   });
   
   it("commaStart", function() {
@@ -27,6 +28,10 @@ describe("options", function() {
 
   it("functionCase", function() {
     expect(buildCommandArguments({ functionCase: CaseOptionEnum.lowercase })).to.contain("--function-case 1");
+  });
+
+  it("noGrouping", function() {
+    expect(buildCommandArguments({ noGrouping: true })).to.contain("--nogrouping");
   });
 
   it("maxLength", function() {

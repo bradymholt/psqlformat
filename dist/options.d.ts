@@ -7,6 +7,7 @@ export interface IOptions {
     commaEnd?: boolean;
     noComment?: boolean;
     functionCase?: CaseOptionEnum;
+    noGrouping?: boolean;
     keywordCase?: CaseOptionEnum;
     formatType?: boolean;
     placeholder?: string;

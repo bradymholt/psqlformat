@@ -21,7 +21,7 @@ export function formatFiles(
   for (let path of paths) {
     let startTime = process.hrtime();
     let command = `${buildCommand(options)} ${path}`;
-    // Run pgFormatter    
+    // Run pgFormatter
     let output = execSync(command, {
       encoding: "utf8"
     });
@@ -91,6 +91,10 @@ export function buildCommandArguments(options: IOptions) {
 
   if (options.functionCase != null) {
     commandArgs += ` --function-case ${options.functionCase}`;
+  }
+
+  if (options.noGrouping) {
+    commandArgs += " --nogrouping";
   }
 
   if (options.keywordCase != null) {
