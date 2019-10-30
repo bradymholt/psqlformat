@@ -30,6 +30,10 @@ describe("options", function() {
     expect(buildCommandArguments({ functionCase: CaseOptionEnum.lowercase })).to.contain("--function-case 1");
   });
 
+  it("noGrouping", function() {
+    expect(buildCommandArguments({ noGrouping: true })).to.contain("--nogrouping");
+  });
+
   it("maxLength", function() {
     expect(buildCommandArguments({ maxLength: 120 })).to.contain("--maxlength 120");
   });

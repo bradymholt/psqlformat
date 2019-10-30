@@ -62,11 +62,13 @@ Options:
   --functionCase  Case of the function names
          [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
                                                           [default: "unchanged"]
+  --noGrouping    Add a newline between statements in transaction regroupement
+                                                      [boolean] [default: false]
   --keywordCase   Case of the reserved keywords
          [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
                                                           [default: "uppercase"]
   --formatType    Use another formatting type for some statements      [boolean]
-  --placeholder   Regex to find code that must not be changed           [string]                                        
+  --placeholder   Regex to find code that must not be changed           [string]
   --perlBinPath   The path to the perl executable     [string] [default: "perl"]
 ```
 

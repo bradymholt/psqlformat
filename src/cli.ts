@@ -48,6 +48,11 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
         describe: "Case of the function names"
       },
+      noGrouping: {
+        type: "boolean",
+        default: false,
+        describe: "Add a newline between statements in transaction regroupement"
+      },
       keywordCase: {
         type: "string",
         default: "uppercase",
