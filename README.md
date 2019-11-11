@@ -1,4 +1,4 @@
-# psqlformat [![NPM Package](https://img.shields.io/npm/v/psqlformat.svg)](https://www.npmjs.com/package/psqlformat)
+# psqlformat ![build](https://github.com/bradymholt/xertz/workflows/build/badge.svg) [![NPM Package](https://img.shields.io/npm/v/psqlformat.svg)](https://www.npmjs.com/package/psqlformat)
 
 A PostgreSQL SQL syntax formatter.  This utility is a wrapper for [darold/pgFormatter](https://github.com/darold/pgFormatter) and requires Perl to be available.
 
