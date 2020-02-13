@@ -50,6 +50,10 @@ describe("options", function() {
     expect(buildCommandArguments({ formatType: true })).to.contain("--format-type");
   });
 
+  it("wrapLimit", function() {
+    expect(buildCommandArguments({ wrapLimit: 80 })).to.contain("--wrap-limit 80");
+  });
+
   it("placeholder", function() {
     expect(buildCommandArguments({ placeholder: "/test123/" })).to.contain("--placeholder /test123/");
   });
