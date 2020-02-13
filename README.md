@@ -70,6 +70,7 @@ Options:
          [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
                                                           [default: "uppercase"]
   --formatType    Use another formatting type for some statements      [boolean]
+  --wrapLimit     Wrap queries at a certain length                      [number]
   --placeholder   Regex to find code that must not be changed           [string]
   --perlBinPath   The path to the perl executable     [string] [default: "perl"]
 ```
