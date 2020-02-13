@@ -85,6 +85,9 @@ function buildCommandArguments(options) {
     if (options.formatType) {
         commandArgs += ` --format-type`;
     }
+    if (options.wrapLimit) {
+        commandArgs += ` --wrap-limit ${options.wrapLimit}`;
+    }
     if (options.placeholder != null) {
         commandArgs += ` --placeholder ${options.placeholder}`;
     }

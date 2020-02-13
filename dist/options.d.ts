@@ -10,6 +10,7 @@ export interface IOptions {
     noGrouping?: boolean;
     keywordCase?: CaseOptionEnum;
     formatType?: boolean;
+    wrapLimit?: number;
     placeholder?: string;
     perlBinPath?: string;
 }

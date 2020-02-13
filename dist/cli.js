@@ -62,6 +62,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             type: "boolean",
             describe: "Use another formatting type for some statements"
         },
+        wrapLimit: {
+            type: "number",
+            describe: "Wrap queries at a certain length"
+        },
         placeholder: {
             type: "string",
             describe: "Regex to find code that must not be changed"
