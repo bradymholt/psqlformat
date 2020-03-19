@@ -71,6 +71,10 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += ` --spaces ${options.spaces}`;
   }
 
+  if (options.tabs) {
+    commandArgs += ` --tabs`;
+  }
+
   if (options.maxLength) {
     commandArgs += ` --maxlength ${options.maxLength}`;
   }

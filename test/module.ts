@@ -15,6 +15,16 @@ FROM
 `);
   });
 
+  it("uses tabs", function() {
+    expect(formatSql("SELECT id FROM animals", { tabs: true })).to.equal(`\
+SELECT
+\tid
+FROM
+\tanimals
+`);
+  });
+
+
   it("returns formatted SQL given a file path", function() {
     let output = formatFiles(queryFilePath, false, { noComment: true, spaces: 2 });
     expect(output).to.equal(`\
