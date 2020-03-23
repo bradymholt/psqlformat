@@ -1,6 +1,6 @@
 {
   "name": "psqlformat",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "main": "dist/index.js",
   "bin": {
     "psqlformat": "dist/bin.js"
@@ -52,6 +52,7 @@
     "build": "tsc",
     "test": "npx mocha --require ts-node/register/type-check --recursive ./test/*.ts",
     "start": "ts-node src/bin.ts test/support/query.sql",
-    "release": "tsc && npx npm-github-release"
+    "prerelease": "tsc",
+    "release": "npx npm-github-release"
   }
 }
