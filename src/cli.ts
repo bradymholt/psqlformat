@@ -21,6 +21,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         default: 4,
         describe: "Number of spaces to indent the code"
       },
+      tabs: {
+        type: "boolean",
+        describe: "Use tabs instead of spaces (spaces option is ignored)"
+      },
       maxLength: {
         type: "number",
         describe: "Maximum length of a query"
