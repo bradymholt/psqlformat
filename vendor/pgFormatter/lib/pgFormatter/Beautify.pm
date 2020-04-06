@@ -19,12 +19,12 @@ pgFormatter::Beautify - Library for pretty-printing SQL queries
 
 =head1 VERSION
 
-Version 4.2
+Version 4.3
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '4.2';
+our $VERSION = '4.3';
 
 # Inclusion of code from Perl package SQL::Beautify
 # Copyright (C) 2009 by Jonas Kramer
@@ -140,6 +140,10 @@ Takes options as hash. Following options are recognized:
 
 =item * wrap_after - number of column after which lists must be wrapped
 
+=item * numbering - statement numbering as a comment before each query
+
+=item * redshift - add Redshift keywords
+
 =back
 
 For defaults, please check function L<set_defaults>.
@@ -154,7 +158,7 @@ sub new
     my $self = bless {}, $class;
     $self->set_defaults();
 
-    for my $key ( qw( query spaces space break wrap keywords functions rules uc_keywords uc_functions uc_types no_comments no_grouping placeholder separator comma comma_break format colorize format_type wrap_limit wrap_after) ) {
+    for my $key ( qw( query spaces space break wrap keywords functions rules uc_keywords uc_functions uc_types no_comments no_grouping placeholder separator comma comma_break format colorize format_type wrap_limit wrap_after numbering redshift) ) {
         $self->{ $key } = $options{ $key } if defined $options{ $key };
     }
 
@@ -208,21 +212,25 @@ sub query
 
     $self->{ 'query' } = $new_value if defined $new_value;
 
+    # Replace any \\ by BSLHPGF
+    $self->{ 'query' } =~ s/\\\\/BSLHPGF/sg;
+    # Replace any \' by PGFBSLHQ
+    $self->{ 'query' } =~ s/\\'/PGFBSLHQ/sg;
+    # Replace any '''...''' by 'PGFESCQ...PGFESCQ'
+    $self->{ 'query' } =~ s/([^'])'''([^']*)'''([^']|$)/$1'PGFESCQ$2PGFESCQ'$3/sg;
+    # Replace any '' by PGFESCQ
+    $self->{ 'query' } =~ s/''/PGFESCQ/sg;
+
     my $i = 0;
     my %temp_placeholder = ();
     my @temp_content = split(/(CREATE(?:\s+OR\s+REPLACE)?\s+(?:FUNCTION|PROCEDURE)\s+)/i, $self->{ 'query' });
     if ($#temp_content > 0) {
         for (my $j = 0; $j <= $#temp_content; $j++) {
             next if ($temp_content[$j] =~ /^CREATE/i or $temp_content[$j] eq '');
-	    # Rewrite single quote code delimiter into $$
-	    if ($temp_content[$j] =~ s/(\s+AS\s+)'(\s+.*?;\s*)'/$1\$\$$2\$\$/is ||
-		    $temp_content[$j] =~ s/(\s+AS\s+)'(\s+.*?END[;]*\s*)'/$1\$\$$2\$\$/is
-	    ) {
-		# Fix some double quote use, this might not cover all cases
-            	$temp_content[$j] =~ s/''''/EMPTYSTRDBLQT/isg;
-            	$temp_content[$j] =~ s/''([^']+)''/'$1'/isg;
-            	$temp_content[$j] =~ s/''''/''/isg;
-            	$temp_content[$j] =~ s/EMPTYSTRDBLQT/''/isg;
+	    # Replace single quote code delimiter into $PGFDLM$
+	    if ($temp_content[$j] !~ s/(\s+AS\s+)'(\s+.*?;\s*)'/$1\$PGFDLM\$$2\$PGFDLM\$/is)
+	    {
+		    $temp_content[$j] =~ s/(\s+AS\s+)'(\s+.*?END[;]*\s*)'/$1\$PGFDLM\$$2\$PGFDLM\$/is;
 	    }
 	    # Remove any call too CREATE/DROP LANGUAGE to not break search of function code separator
 	    $temp_content[$j] =~ s/(CREATE|DROP)\s+LANGUAGE\s+[^;]+;.*//is;
@@ -268,9 +276,6 @@ sub query
         }
     }
     $self->{ 'query' } = join('', @temp_content);
-
-    # Replace any \' by %BSLH%
-    $self->{ 'query' } =~ s/\\'/PGFBSLHQ/g;
 
     # Store values of code that must not be changed following the given placeholder
     if ($self->{ 'placeholder' }) {
@@ -325,8 +330,14 @@ sub content
         $self->{ 'content' } =~ s/CODEPART[B]*(\d+)CODEPART[B]*/$self->{ 'placeholder_values' }[$1]/igs;
     }
 
-    # Replace any %BSLH% by \'
+    # Replace any BSLHPGF by \\
+    $self->{ 'content' } =~ s/BSLHPGF/\\\\/g;
+    # Replace any PGFBSLHQ by \'
     $self->{ 'content' } =~ s/PGFBSLHQ/\\'/g;
+    # Replace any '' by PGFESCQ
+    $self->{ 'content' } =~ s/PGFESCQ/''/g;
+    # Replace any $PGFDLM$ by code delimiter ' 
+    $self->{ 'content' } =~ s/\$PGFDLM\$/'/g;
 
     return $self->{ 'content' };
 }
@@ -435,73 +446,63 @@ sub tokenize_sql
 
     my $re = qr{
         (
-                (?:\\(?:copyright|errverbose|g|gx|gexec|gset|q|crosstabview|watch|\?|h|e|ef|ev|p|r|s|w|copy|echo|i|ir|o|qecho|if|elif|else|endif|d(?:[aAbcCdDfFgilLmnoOpstTuvExy]|dp|et|es|eu|ew|fa|fn|ft|fw|Fd|Fp|Ft|rds|Rp|Rs)?S?\+?|l\+?|sf\+?|sv\+?|z|a|C|f|H|pset|t|T|x|c|connect|encoding|password|conninfo|cd|setenv|timing|\!|prompt|set|unset|lo_export|lo_import|lo_list|lo_unlink))(?:$|[\n]|[\ \t](?:(?!\\\\)[\ \t\S])*)        # psql meta-command
-                |
-                (?:\s*--)[\ \t\S]*      # single line comments
-                |
-                (?:\-\|\-) # range operator "is adjacent to"
-                |
-                (?:\->>|\->|\#>>|\#>|\?\&|\?)  # Json Operators
-                |
-                (?:\#<=|\#>=|\#<>|\#<|\#=) # compares tinterval and reltime
-                |
-                (?:>>=|<<=) # inet operators
-                |
-                (?:!!|\@\@\@) # deprecated factorial and full text search  operators
-                |
-                (?:\|\|\/|\|\/) # square root and cube root
-                |
-                (?:\@\-\@|\@\@|\#\#|<\->|<<\||\|>>|\&<\||\&<|\|\&>|\&>|<\^|>\^|\?\#|\#|\?<\||\?\-\||\?\-|\?\|\||\?\||\@>|<\@|\~=)
+		(?:\\(?:copyright|errverbose|gx|gexec|gset|gdesc|q|crosstabview|watch|\?|copy|qecho|echo|if|elif|else|endif|edit|ir|include_relative|include|warn|write|html|print|out|ef|ev|h|H|i|p|r|s|w|o|e|g|q|d(?:[aAbcCdDeEfFgilLmnoOpPrRstTuvwxy+]{0,3})?|l\+?|sf\+?|sv\+?|z|a|C|f|H|t|T|x|c|pset|connect|encoding|password|conninfo|cd|setenv|timing|prompt|reset|set|unset|lo_export|lo_import|lo_list|lo_unlink|\!))(?:$|[\n]|[\ \t](?:(?!\\(?:\\|pset|reset|connect|encoding|password|conninfo|cd|setenv|timing|prompt|set|unset|lo_export|lo_import|lo_list|lo_unlink|\!|copy|qecho|echo|edit|html|include_relative|include|print|out|warn|watch|write|q))[\ \t\S])*)        # psql meta-command
+		|
+		(?:\s*--)[\ \t\S]*      # single line comments
+		|
+		(?:\-\|\-) # range operator "is adjacent to"
+		|
+		(?:\->>|\->|\#>>|\#>|\?\&|\?)  # Json Operators
+		|
+		(?:\#<=|\#>=|\#<>|\#<|\#=) # compares tinterval and reltime
+		|
+		(?:>>=|<<=) # inet operators
+		|
+		(?:!!|\@\@\@) # deprecated factorial and full text search  operators
+		|
+		(?:\|\|\/|\|\/) # square root and cube root
+		|
+		(?:\@\-\@|\@\@|\#\#|<\->|<<\||\|>>|\&<\||\&<|\|\&>|\&>|<\^|>\^|\?\#|\#|\?<\||\?\-\||\?\-|\?\|\||\?\||\@>|<\@|\~=)
                                  # Geometric Operators
-                |
-                (?:~<=~|~>=~|~>~|~<~) # string comparison for pattern matching operator families
-                |
-                (?:!~~|!~~\*|~~\*|~~) # LIKE operators
-                |
-                (?:!~\*|!~|~\*) # regular expression operators
-                |
-                (?:\*=|\*<>|\*<=|\*>=|\*<|\*>) # composite type comparison operators
-                |
-                (?:<>|<=>|>=|<=|=>|==|!=|:=|=|!|<<|>>|<|>|\|\||\||&&|&|-|\+|\*(?!/)|/(?!\*)|\%|~|\^|\?) # operators and tests
-                |
-                [\[\]\(\),;.]            # punctuation (parenthesis, comma)
-                |
-                E\'\'(?!\')              # empty single escaped quoted string
-                |
-                \'\'(?!\')              # empty single quoted string
-                |
-                \"\"(?!\"")             # empty double quoted string
-                |
-                '[^']+'(?!')            # anyhing into single quoted string
-                |
-                "(?>(?:(?>[^"\\]+)|""|\\.)*)+" # anything inside double quotes, ungreedy
-                |
-                `(?>(?:(?>[^`\\]+)|``|\\.)*)+` # anything inside backticks quotes, ungreedy
-                |
-                E'(?>(?:(?>[^'\\]+)|''|\\.)*)+' # anything escaped inside single quotes, ungreedy.
-                |
-                '(?>(?:(?>[^'\\]+)|''|\\.)*)+' # anything inside single quotes, ungreedy.
-                |
-                /\*[\ \t\r\n\S]*?\*/      # C style comments
-                |
-                (?:[\w:\@]+[\$]*[\w:\@]*(?:\.(?:\w+|\*)?)*) # words, standard named placeholders, db.table.*, db.*
-                |
-                (?:\$\w+\$)
+		|
+		(?:~<=~|~>=~|~>~|~<~) # string comparison for pattern matching operator families
+		|
+		(?:!~~|!~~\*|~~\*|~~) # LIKE operators
+		|
+		(?:!~\*|!~|~\*) # regular expression operators
+		|
+		(?:\*=|\*<>|\*<=|\*>=|\*<|\*>) # composite type comparison operators
+		|
+		(?:<>|<=>|>=|<=|=>|==|!=|:=|=|!|<<|>>|<|>|\|\||\||&&|&|-|\+|\*(?!/)|/(?!\*)|\%|~|\^|\?) # operators and tests
+		|
+		[\[\]\(\),;.]            # punctuation (parenthesis, comma)
+		|
+		\"\"(?!\"")             # empty double quoted string
+		|
+		"(?>(?:(?>[^"\\]+)|""|\\.)*)+" # anything inside double quotes, ungreedy
+		|
+		`(?>(?:(?>[^`\\]+)|``|\\.)*)+` # anything inside backticks quotes, ungreedy
+		|
+		[EB]*'[^']+' # anything inside single quotes, ungreedy.
+		|
+		/\*[\ \t\r\n\S]*?\*/      # C style comments
+		|
+		(?:[\w:\@]+[\$]*[\w:\@]*(?:\.(?:\w+|\*)?)*) # words, standard named placeholders, db.table.*, db.*
+		|
+		(?:\$\w+\$)
                 |
                 (?: \$_\$ | \$\d+ | \${1,2} | \$\w+\$ ) # dollar expressions - eg $_$ $3 $$ $BODY$
                 |
                 \n                      # newline
                 |
                 [\t\ ]+                 # any kind of white spaces
+		|
+		[^\s\*\/\-\\;:,]+                 # anything else
         )
     }smx;
 
-    my @query = ();
-    @query = grep { /\S/ } $query =~ m{$re}smxg;
-    map { s/(.*PGFBSLHQ)$/'$1/; } @query;
+    my @query = grep { /\S/ } $query =~ m{$re}smxg;
     $self->{ '_tokens' } = \@query;
-
-    return @query;
 }
 
 sub _pop_level
@@ -658,10 +659,13 @@ sub beautify
     $self->{ '_is_in_returns_table' } = 0;
     $self->{ '_has_limit' }  = 0;
     $self->{ '_not_a_type' } = 0;
+    $self->{ 'stmt_number' } = 1;
+    $self->{ '_is_subquery' } = 0;
 
     my $last = '';
-    my @token_array = $self->tokenize_sql();
+    $self->tokenize_sql();
 
+    $self->{ 'content' } .= "-- Statement # $self->{ 'stmt_number' }\n" if ($self->{ 'numbering' } and $#{ $self->{ '_tokens' } } > 0);
     while ( defined( my $token = $self->_token ) )
     {
         my $rule = $self->_get_rule( $token );
@@ -697,6 +701,15 @@ sub beautify
 	    )
 	    {
                 $self->{ '_is_in_function' }++;
+	    } elsif (uc($token) eq 'IN' and $self->{ '_tokens' }[1] !~ /^(SELECT|WITH|VALUES)$/i) {
+                $self->{ '_is_in_function' }++;
+	    # try to detect if this is a user function
+	    } elsif (!$self->{ '_is_in_function' } and !$self->{ '_is_in_create' }
+			    and !$self->_is_comment($token) and length($token) > 2 # lazy exclusion of operators/comma 
+			    and $last !~ /^(?:AS|RECURSIVE|WITH|OPERATOR|INTO|TYPE|VIEW)/i
+			    and !$self->_is_keyword($token, $self->_next_token(), $last))
+	    {
+                $self->{ '_is_in_function' }++;
 	    }
         }
 
@@ -716,7 +729,7 @@ sub beautify
                 $self->{ '_parenthesis_function_level' }-- if ($self->{ '_parenthesis_function_level' } > 0);
                 if (!$self->{ '_parenthesis_function_level' }) {
 	            $self->_set_level(pop(@{ $self->{ '_level_parenthesis_function' } }) || 0, $token, $last);
-		    $self->_over($token,$last) if (!$self->{ '_is_in_create' } && !$self->{ '_is_in_operator' } && !$self->{ '_is_in_alter' });
+		    $self->_over($token,$last) if (!$self->{ '_is_in_create' } && !$self->{ '_is_in_operator' } && !$self->{ '_is_in_alter' } and uc($self->_next_token($token,$last)||'') ne 'LOOP');
 	        }
             }
 	    $self->{ '_is_in_function' } = 0 if (!$self->{ '_parenthesis_function_level' });
@@ -755,7 +768,7 @@ sub beautify
         # Control case where we have to add a newline, go back and
         # reset indentation after the last ) in the WITH statement
         ####
-        if ($token =~ /^WITH$/i && (!defined $last || $last ne ')')
+        if ($token =~ /^WITH$/i && (!defined $last or $last ne ')')
 		&& !$self->{ '_is_in_partition' } && !$self->{ '_is_in_publication' }
 		&& !$self->{ '_is_in_policy' } && uc($self->_next_token) ne 'TIME')
 	{
@@ -841,7 +854,7 @@ sub beautify
         elsif ( uc($token) eq 'PASSING' and defined $self->_next_token && uc($self->_next_token) eq 'BY')
 	{
             $self->{ '_has_order_by' } = 1;
-        } 
+        }
 
 	# Explain need indentation in option list
         if ( uc($token) eq 'EXPLAIN' )
@@ -859,6 +872,7 @@ sub beautify
         if ($token =~ /^(FUNCTION|PROCEDURE|SEQUENCE|INSERT|DELETE|UPDATE|SELECT|RAISE|ALTER|GRANT|REVOKE|COMMENT|DROP|RULE|COMMENT|LOCK)$/i) {
             my $k_stmt = uc($1);
 	    $self->{ '_is_in_explain' }  = 0;
+	    $self->{ '_is_in_where' } = 0;
             # Set current statement with taking care to exclude of SELECT ... FOR UPDATE
 	    # statement and ON CONFLICT DO UPDATE.
             if ($k_stmt ne 'UPDATE' or (defined $self->_next_token and $self->_next_token ne ';' and $self->_next_token ne ')' and (not defined $last or $last !~ /^DO|SHARE$/i))) {
@@ -1048,14 +1062,14 @@ sub beautify
             $last = $self->_set_last($token, $last);
             next;
         }
-        elsif ($token =~ /^INSTEAD$/i and defined $last and uc($last) eq 'DO')
+        elsif ($token =~ /^INSTEAD|ALSO$/i and defined $last and uc($last) eq 'DO')
 	{
                 $self->_add_token( $token );
                 $self->_new_line($token,$last);
                 $last = $self->_set_last($token, $last);
                 next;
         }
-        elsif ($token =~ /^DO$/i and defined $self->_next_token and $self->_next_token =~ /^INSTEAD|UPDATE|NOTHING$/i)
+        elsif ($token =~ /^DO$/i and defined $self->_next_token and $self->_next_token =~ /^INSTEAD|ALSO|UPDATE|NOTHING$/i)
 	{
                 $self->_new_line($token,$last);
 		$self->_over($token,$last);
@@ -1279,9 +1293,10 @@ sub beautify
             $self->{ '_is_in_create' }++ if ($self->{ '_is_in_create' });
             $self->{ '_is_in_constraint' }++ if ($self->{ '_is_in_constraint' });
             $self->_add_token( $token, $last );
+	    $self->{ '_is_subquery' }++ if (defined $self->_next_token and uc($self->_next_token) eq 'SELECT');
 	    if (defined $self->_next_token and $self->_next_token eq ')' and !$self->{ '_is_in_create' }) {
-		 $last = $self->_set_last($token, $last);
-		 next;
+		$last = $self->_set_last($token, $last);
+		next;
 	    }
             if ( !$self->{ '_is_in_index' } && !$self->{ '_is_in_publication' }
 		    && !$self->{ '_is_in_distinct' } && !$self->{ '_is_in_filter' }
@@ -1332,6 +1347,15 @@ sub beautify
 
         elsif ( $token eq ')' )
 	{
+	    my $next = quotemeta($self->_next_token) || 'SELECT';
+            if (!$self->{ '_parenthesis_level' } and defined $self->_next_token
+			    and $self->_is_keyword($self->_next_token) or (
+				!grep(/^$next$/, %{$self->{ 'dict' }->{ 'symbols' }})
+			)
+		)
+	    {
+		$self->{ '_is_in_where' } = 0;
+	    }
 	    if ($self->{ '_is_in_constraint' } and defined $self->_next_token
 			    and ($self->_next_token eq ',' or $self->_next_token eq ')')) {
 		$self->{ '_is_in_constraint' } = 0;
@@ -1366,7 +1390,6 @@ sub beautify
             }
 	    if (defined $self->_next_token && $self->_next_token !~ /FILTER/i)
 	    {
-
                 my $add_nl = 0;
                 $add_nl = 1 if ($self->{ '_is_in_create' } > 1
 		    and defined $last and $last ne '('
@@ -1380,12 +1403,14 @@ sub beautify
 			    and !$self->{ '_is_in_function' }
 			    and (defined $self->_next_token 
 				    and $self->_next_token =~ /^(SELECT|WITH)$/i)
+		    		    and uc($self->{ '_tokens' }[1]) ne 'ORDINALITY'
 			    and ($self->{ '_is_in_create' } or $last ne ')' and $last ne ']')
 	        );
 		$self->_new_line($token,$last) if ($add_nl);
-                if (!$self->{ '_is_in_grouping' } && !$self->{ '_is_in_trigger' }
-						&& !$self->{ 'no_break' }
-						&& $self->{ '_is_in_create' } <= 2
+                if (!$self->{ '_is_in_grouping' } and !$self->{ '_is_in_trigger' }
+				and !$self->{ 'no_break' }
+				and $self->{ '_is_in_create' } <= 2
+				and $self->_next_token !~ /^LOOP$/i
 			)
 		{
 			$self->_back($token, $last);
@@ -1404,7 +1429,6 @@ sub beautify
                 $self->{ '_is_in_over' } = 0;
                 $self->{ '_has_order_by' } = 0;
                 $self->{ '_is_in_policy' } = 0;
-                $self->{ '_is_in_where' } = 0;
                 $self->{ '_is_in_aggregate' } = 0;
             } 
             $self->_add_token( $token );
@@ -1415,20 +1439,29 @@ sub beautify
             }
 
             # When closing CTE statement go back again
-            if ($self->_next_token =~ /^SELECT|INSERT|UPDATE|DELETE$/i && !$self->{ '_is_in_policy' }) {
-                $self->_back($token, $last) if ($self->{ '_current_sql_stmt' } ne 'INSERT');
+            if ( ($self->_next_token =~ /^(?:SELECT|INSERT|UPDATE|DELETE)$/i and !$self->{ '_is_in_policy' })
+			    or ($self->{ '_is_in_with' } and $self->{ '_is_subquery' }
+				    and $self->{ '_is_subquery' } % 2 == 0) )  {
+                $self->_back($token, $last) if ($self->{ '_current_sql_stmt' } ne 'INSERT'
+				and (!$self->{ '_parenthesis_level' } or !defined $self->_next_token
+					or uc($self->_next_token) eq 'AS'
+					or ($#{$self->{ '_tokens' }} >= 1 and $self->{ '_tokens' }->[ 1 ] eq ',')));
             }
+	    $self->{ '_is_subquery' }-- if ($self->{ '_is_subquery' }
+			    and defined $self->_next_token and $#{$self->{ '_tokens' }} >= 1
+			    and (uc($self->_next_token) eq 'AS' or $self->{ '_tokens' }->[ 1 ] eq ','));
             if ($self->{ '_is_in_create' } <= 1) {
                 my $next_tok = quotemeta($self->_next_token);
                 $self->_new_line($token,$last)
                     if (defined $self->_next_token
-                    and $self->_next_token !~ /^AS|IS|THEN|INTO|BETWEEN|ON|FILTER|WITHIN|DESC|ASC$/i
+                    and $self->_next_token !~ /^(?:AS|IS|THEN|INTO|BETWEEN|ON|IN|FILTER|WITHIN|DESC|ASC|WITHOUT|CASCADE)$/i
                     and ($self->_next_token !~ /^AND|OR$/i or !$self->{ '_is_in_if' })
                     and $self->_next_token ne ')'
                     and $self->_next_token !~ /^:/
                     and $self->_next_token ne ';'
                     and $self->_next_token ne ','
                     and $self->_next_token ne '||'
+                    and uc($self->_next_token) ne 'CONCAT'
                     and ($self->_is_keyword($self->_next_token) or $self->_is_function($self->_next_token))
 		    and $self->{ '_current_sql_stmt' } !~ /^(GRANT|REVOKE)$/
                     and !exists  $self->{ 'dict' }->{ 'symbols' }{ $next_tok }
@@ -1495,8 +1528,7 @@ sub beautify
 	    $add_newline = 0 if ($self->{ '_is_in_value' } and $self->{ '_parenthesis_level_value' });
 	    $add_newline = 0 if ($self->{ '_is_in_function' } or $self->{ '_is_in_statistics' });
 	    $add_newline = 0 if (defined $self->_next_token and $self->_is_comment($self->_next_token));
-
-	    $self->_new_line($token,$last) if ($add_newline and $self->{ 'comma' } eq 'end' and $self->{ '_current_sql_stmt' } ne 'INSERT');
+	    $self->_new_line($token,$last) if ($add_newline and $self->{ 'comma' } eq 'end' and ($self->{ 'comma_break' } || $self->{ '_current_sql_stmt' } ne 'INSERT'));
         }
 
         elsif ( $token eq ';' or $token =~ /^\\(?:g|crosstabview|watch)/ )
@@ -1562,6 +1594,7 @@ sub beautify
             $self->{ '_is_in_returns_table' } = 0;
 	    $self->{ '_has_limit' } = 0;
 	    $self->{ '_not_a_type' } = 0;
+            $self->{ '_is_subquery' } = 0;
 
 	    if ( $self->{ '_insert_values' } )
 	    {
@@ -1589,6 +1622,8 @@ sub beautify
 	    {
 		$self->{ '_new_line' } = 0;
                 $self->_new_line($token,$last);
+		$self->{ 'stmt_number' }++;
+		$self->{ 'content' } .= "-- Statement # $self->{ 'stmt_number' }\n" if ($self->{ 'numbering' } and $#{ $self->{ '_tokens' } } > 0);
             }
             # End of statement; remove all indentation when we are not in a BEGIN/END block
             if (!$self->{ '_is_in_declare' } && $self->{ '_is_in_block' } == -1)
@@ -1722,7 +1757,7 @@ sub beautify
 	    {
                 if (!$self->{ '_is_in_filter' } and ($token !~ /^SET$/i or !$self->{ '_is_in_index' }))
 		{
-		    $self->_back($token, $last) if (uc($token) ne 'VALUES' or $self->{ '_current_sql_stmt' } ne 'INSERT');
+		    $self->_back($token, $last) if ((uc($token) ne 'VALUES' or $self->{ '_current_sql_stmt' } ne 'INSERT') and (uc($token) ne 'WHERE' or $self->{'_is_in_with' } < 2 or $self->{ '_level' } > 1));
 		    $self->_new_line($token,$last) if (!$self->{ '_is_in_rule' } and ($last !~ /^DEFAULT$/i or $self->_next_token() ne ';'));
                 }
             }
@@ -1733,7 +1768,7 @@ sub beautify
                 next;
             }
 
-            if ($token =~ /^VALUES$/i and !$self->{ '_is_in_rule' } and ($self->{ '_current_sql_stmt' } eq 'INSERT' or $last eq '('))
+            if ($token =~ /^VALUES$/i and !$self->{ '_is_in_rule' } and !$self->{ 'comma_break' } and ($self->{ '_current_sql_stmt' } eq 'INSERT' or $last eq '('))
 	    {
 		$self->_over($token,$last);
 		if ($self->{ '_current_sql_stmt' } eq 'INSERT' or $last eq '(')
@@ -1810,9 +1845,9 @@ sub beautify
             }
 	    elsif (!$self->{ '_is_in_policy' } && $token !~ /^DELETE|UPDATE$/i && (!defined $self->_next_token || $self->_next_token !~ /^DISTINCT$/i))
 	    {
-                $self->_new_line($token,$last);
+                $self->_new_line($token,$last) if (!defined $last or $last ne "\\\\");
                 $self->_add_token( $token );
-                $self->_new_line($token,$last) if (!$self->{ 'wrap_after' });
+                $self->_new_line($token,$last) if (!$self->{ 'wrap_after' } and (!defined $last or $last ne "\\\\"));
                 $self->_over($token,$last);
             }
 	    else
@@ -1867,7 +1902,7 @@ sub beautify
 	    if (uc($token) ne 'EXCEPTION' or not defined $last or uc($last) ne 'RAISE')
 	    {
 		# Excluding CREATE/DROP GROUP
-                $self->_new_line($token,$last) if (not defined $last or $last !~ /^(CREATE|DROP)$/);
+                $self->_new_line($token,$last) if (!$self->{ '_is_in_function' } and (not defined $last or $last !~ /^(CREATE|DROP)$/));
             }
             # Store current indent position to print END at the right level
             if (uc($last) ne 'RAISE' and $token =~ /^EXCEPTION$/i)
@@ -1890,12 +1925,12 @@ sub beautify
 	    }
         }
 
-        elsif ( $token =~ /^(?:BY)$/i and $last !~ /^(?:INCREMENT|OWNED|PARTITION)$/i)
+        elsif ( $token =~ /^(?:BY)$/i and $last !~ /^(?:INCREMENT|OWNED|PARTITION|GENERATED)$/i)
 	{
             $self->_add_token( $token );
 	    $self->{ '_col_count' } = 0 if (defined $last && $last =~ /^(?:GROUP|ORDER)/i);
 	    if (!$self->{ '_has_order_by' } and !$self->{ '_is_in_over' }) {
-                $self->_new_line($token,$last) if (!$self->{ 'wrap_after' });
+                $self->_new_line($token,$last) if (!$self->{ 'wrap_after' } and !$self->{ '_is_in_function' });
                 $self->_over($token,$last);
 	    }
         }
@@ -1932,7 +1967,13 @@ sub beautify
 
         elsif ( $token =~ /^(?:IF|LOOP)$/i && $self->{ '_current_sql_stmt' } ne 'GRANT')
 	{
-            $self->_add_token( $token );
+	    if ($self->{ '_is_in_join' }) {
+	        $self->{ '_is_in_join' } = 0;
+		$self->_back($token,$last);
+                $self->_add_token( $token );
+	    } else {
+                $self->_add_token( $token );
+	    }
 	    $self->{ 'no_break' } = 0;
             if (defined $self->_next_token and $self->_next_token !~ /^(EXISTS|;)$/i)
 	    {
@@ -2073,7 +2114,7 @@ sub beautify
             if ( $token =~ /(?:LEFT|RIGHT|FULL|CROSS|NATURAL)$/i )
 	    {
                 $self->_new_line($token,$last);
-                $self->_over($token,$last) if ( $self->{ '_level' } == 0 );
+                $self->_over($token,$last) if ( $self->{ '_level' } == 0 || ($self->{ '_is_in_with' } > 1 and $self->{ '_level' } == 1));
             }
             if ( ($token =~ /(?:INNER|OUTER)$/i) && ($last !~ /(?:LEFT|RIGHT|CROSS|NATURAL|FULL)$/i) )
 	    {
@@ -2098,6 +2139,8 @@ sub beautify
 
         elsif ( $token =~ /^(?:AND|OR)$/i )
 	{
+            $self->{ '_is_in_where' } = 0;
+
             # Try to detect AND in BETWEEN clause to prevent newline insert
             if (uc($token) eq 'AND' and ($self->_next_token() =~ /^\d+$/ || (defined $last && $last =~ /^(PRECEDING|FOLLOWING|ROW)$/i)))
 	    {
@@ -2151,7 +2194,7 @@ sub beautify
             if (!$self->{ '_is_in_from' })
 	    {
 		$self->_over($token,$last) if ($self->{ '_is_in_operator' });
-                $self->_new_line($token,$last) if (uc($last) ne 'EXCLUDE' and !$self->{ '_is_in_index' });
+                $self->_new_line($token,$last) if (uc($last) ne 'EXCLUDE' and !$self->{ '_is_in_index' } and !$self->{ '_is_in_function' });
             }
 	    else
 	    {
@@ -2175,7 +2218,7 @@ sub beautify
 	{
 	    # treat everything starting with a \ and at least one character as psql meta command. 
             $self->_add_token( $token );
-            $self->_new_line($token,$last);
+            $self->_new_line($token,$last) if ($token ne "\\\\" and defined $self->_next_token and $self->_next_token ne "\\\\");
         }
 
         elsif ($token =~ /^ADD|DROP$/i && ($self->{ '_current_sql_stmt' } eq 'SEQUENCE'
@@ -2286,6 +2329,10 @@ sub beautify
 			 $self->_back($token,$last);
 		     }
 		 }
+		 if ($self->{ 'comma_break' } && $self->{ '_current_sql_stmt' } eq 'INSERT' && $last eq '(')
+	 	 {
+                     $self->_new_line($token,$last);
+		 }
                  $self->_add_token( $token, $last );
                  if (defined $last && uc($last) eq 'LANGUAGE' && (!defined $self->_next_token || $self->_next_token ne ';'))
                  {
@@ -2301,6 +2348,18 @@ sub beautify
     $self->_new_line();
 
     return;
+}
+
+sub _lower
+{
+    my ( $self, $token ) = @_;
+
+    if ($DEBUG) {
+        my ($package, $filename, $line) = caller;
+        print STDERR "DEBUG_ADD: line: $line => token=$token\n";
+    }
+
+    return lc($token);
 }
 
 =head2 _add_token
@@ -2337,7 +2396,6 @@ sub _add_token
     my $last_is_dot = defined( $last_token ) && $last_token eq '.';
 
     my $sp = $self->_indent;
-
     if ( !$self->_is_punctuation( $token ) and !$last_is_dot)
     {
         if ( (!defined($last_token) || $last_token ne '(') && $token ne ')' && $token !~ /^::/ )
@@ -2378,9 +2436,15 @@ sub _add_token
         }
 	elsif (defined $last_token and (!$self->{ '_is_in_operator' } or !$self->{ '_is_in_alter' }))
 	{
-	    if ($last_token eq '(' && ($self->{ '_is_in_type' } or ($self->{ '_is_in_operator' } and !$self->_is_type($token))))
+	    if ($last_token eq '(' and ($self->{ '_is_in_type' } or ($self->{ '_is_in_operator' }
+					    and !$self->_is_type($token, $last_token, $self->_next_token))))
 	    {
-                print STDERR "DEBUG_SPC: 5) last=", ($last_token||''), ", token=$token\n" if ($DEBUG_SP);
+                print STDERR "DEBUG_SPC: 5a) last=", ($last_token||''), ", token=$token\n" if ($DEBUG_SP);
+                $self->{ 'content' } .= $sp;
+	    }
+	    elsif ($self->{ 'comma_break' } and $self->{ '_current_sql_stmt' } eq 'INSERT')
+	    {
+                print STDERR "DEBUG_SPC: 5b) last=", ($last_token||''), ", token=$token\n" if ($DEBUG_SP);
                 $self->{ 'content' } .= $sp;
 	    }
         }
@@ -2408,19 +2472,28 @@ sub _add_token
         }
 	else
 	{
-            $token =~ s/\n/\n$sp/gs;
+	    $token =~ s/\n/\n$sp/gs if ($self->{ '_is_in_function' } and $self->{ '_fct_code_delimiter' } eq "'");
         }
     }
 
     my $next_token = $self->_next_token || '';
+    my @cast = ();
+    my @next_cast = ();
 
-    my @cast = split(/::/, $token);
-    $token = shift(@cast) if ($#cast >= 0);
+    # Be sure that we not going to modify a constant
+    if ($self->{ '_is_in_create' } < 2 and $token !~ /^[E]*'.*'$/)
+    {
+	    @cast = split(/::/, $token);
+	    $token = shift(@cast) if ($#cast >= 0);
+	    @next_cast = split(/::/, $next_token);
+	    $next_token = shift(@next_cast) if ($#next_cast >= 0);
+    }
+
     # lowercase/uppercase keywords taking care of function with same name
     if ($self->_is_keyword( $token, $next_token, $last_token ) and
-	    (!$self->_is_type($self->_next_token) or $self->{ '_is_in_create' } < 2
-		   or $self->{ '_is_in_create_function' })
-        and (!$self->_is_function( $token ) || $next_token ne '(')
+	    (!$self->_is_type($next_token) or $self->{ '_is_in_create' } < 2
+		   or $self->{ '_is_in_create_function' } or uc($token) eq 'AS')
+		   and (!$self->_is_function( $token ) || $next_token ne '(' || uc($token) eq 'CAST')
     )
     {
         $token = lc( $token )            if ( $self->{ 'uc_keywords' } == 1 );
@@ -2441,13 +2514,23 @@ sub _add_token
             $fct = ucfirst( lc( $fct ) );
             $token =~ s/$fct/$fct/i if ( $self->{ 'uc_functions' } == 3 );
         }
+	# case of (NEW|OLD).colname keyword that need to formatted too
+	if ($self->{ '_is_in_create_function' } && $token =~ /^(NEW|OLD)\./i)
+	{
+            $token =~ s/^(OLD|NEW)\./\L$1\E\./i if ( $self->{ 'uc_keywords' } == 1 );
+            $token =~ s/^(OLD|NEW)\./\U$1\E\./i if ( $self->{ 'uc_keywords' } == 2 );
+            $token =~ s/^OLD\./\UOld\E\./i if ( $self->{ 'uc_keywords' } == 3 );
+            $token =~ s/^NEW\./\UNew\E\./i if ( $self->{ 'uc_keywords' } == 3 );
+	}
     }
+
+    my $tk_is_type = $self->_is_type($token, $last_token, $next_token);
 
     if ($token =~ /^(AT|SET)$/i)
     {
         $self->{ '_not_a_type' } = 1;
     }
-    elsif (!$self->_is_type($token))
+    elsif (!$tk_is_type)
     {
         $self->{ '_not_a_type' } = 0;
     }
@@ -2455,10 +2538,10 @@ sub _add_token
     # Type are always lowercase
     if (!$self->{ '_not_a_type' })
     {
-	    if ($self->_is_type($token) and defined $last_token)
+	    if ($tk_is_type and defined $last_token)
 	    {
-		if ((!$self->_is_keyword($last_token) or $self->_is_type($last_token) or $self->_is_type($next_token))
-			and (not defined $next_token or $next_token !~ /^(SEARCH)$/i))
+		if ($last_token =~ /^(AS|RETURNS|INOUT|IN|OUT)$/i or !$self->_is_keyword($last_token)
+				or $self->_is_type($last_token) or $self->_is_type($next_token))
 		{
 		    $token = lc( $token )            if ( $self->{ 'uc_types' } == 1 );
 		    $token = uc( $token )            if ( $self->{ 'uc_types' } == 2 );
@@ -2466,7 +2549,6 @@ sub _add_token
 		}
 	    }
     }
-    #$self->{ '_not_a_type' } = 0 if ($token =~ /^(ZONE|TO|=|;)$/i);
 
     # Add formatting for HTML output
     if ( $self->{ 'colorize' } && $self->{ 'format' } eq 'html' ) {
@@ -2475,10 +2557,32 @@ sub _add_token
 
     foreach my $c (@cast)
     {
-        $c = lc($c) if ( $self->{ 'uc_functions' } == 1 );
-        $c = uc($c) if ( $self->{ 'uc_functions' } == 2 );
-        $c = ucfirst( lc( $c ) ) if ( $self->{ 'uc_functions' } == 3 );
+	my @words = split(/(\s+)/, $c);
+	$c = '';
+	foreach my $w (@words)
+	{
+		if (!$self->_is_type($token))
+		{
+			$c .= $w;
+		}
+		else
+		{
+			$c .= lc($w) if ( $self->{ 'uc_types' } == 1 );
+			$c .= uc($w) if ( $self->{ 'uc_types' } == 2 );
+			$c .= ucfirst( lc( $w ) ) if ( $self->{ 'uc_types' } == 3 );
+		}
+        }
         $token .= '::' . $c;
+    }
+
+    # Format cast in function code
+    my $reg = join('|', @{$self->{ 'types' }});
+    $reg = '(?:TIMESTAMP WITH TIME ZONE|TIMESTAMP WITHOUT TIME ZONE|CHARACTER VARYING|' . $reg . ')';
+    if ($token =~ /::/)
+    {
+        $token =~ s/::($reg)/'::' . lc($1)/igse if ( $self->{ 'uc_types' } == 1 );
+        $token =~ s/::($reg)/'::' . uc($1)/igse if ( $self->{ 'uc_types' } == 2 );
+        $token =~ s/::($reg)/'::' . ucfirst(lc($1))/igse if ( $self->{ 'uc_types' } == 3 );
     }
 
     $self->{ 'content' } .= $token;
@@ -2647,9 +2751,17 @@ Check if a token is a known SQL type
 
 sub _is_type
 {
-    my ( $self, $token ) = @_;
+    my ( $self, $token, $last_token, $next_token ) = @_;
 
     return if (!defined $token);
+    return if (defined $next_token and $next_token =~ /^(SEARCH)$/i);
+
+    if ($DEBUG and defined $token)
+    {
+        my ($package, $filename, $line) = caller;
+        print STDERR "DEBUG_TYPE: line: $line => token=[$token], last=", ($last_token||''), ", next=", ($next_token||''), ", type=", (grep { uc($_) eq uc( $token ) } @{ $self->{ 'types' } }), "\n";
+    }
+
     $token =~ s/\s*\(.*//; # remove any parameter to the type
     return ~~ grep { $_ eq uc( $token ) } @{ $self->{ 'types' } };
 }
@@ -3064,7 +3176,7 @@ sub format
 
     if ( grep(/^$format$/i, 'text', 'html') ) {
         $self->{ 'format' } = lc($format);
-    return 1;
+        return 1;
     }
     return 0;
 }
@@ -3086,7 +3198,7 @@ sub set_dicts
     # Afterwards, when everything is ready, put it in $self->{'dict'}->{...}
 
     my @pg_keywords = map { uc } qw( 
-        ADD AFTER AGGREGATE ALL ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC ASYMMETRIC AUTHORIZATION ATTACH AUTO_INCREMENT
+        ADD AFTER AGGREGATE ALL ALSO ALTER ANALYSE ANALYZE AND ANY ARRAY AS ASC ASYMMETRIC AUTHORIZATION ATTACH AUTO_INCREMENT
         BACKWARD BEFORE BEGIN BERNOULLI BETWEEN BINARY BOTH BY CACHE CASCADE CASE CAST CHECK CHECKPOINT CLOSE CLUSTER
 	COLLATE COLLATION COLUMN COMMENT COMMIT COMMITTED CONCURRENTLY CONFLICT CONSTRAINT CONSTRAINT CONTINUE COPY
 	COST COSTS CREATE CROSS CUBE CURRENT CURRENT_DATE CURRENT_ROLE CURRENT_TIME CURRENT_TIMESTAMP CURRENT_USER CURSOR
@@ -3108,14 +3220,14 @@ sub set_dicts
 	CALL GROUPS INCLUDE OTHERS PROCEDURES ROUTINE ROUTINES TIES READ_ONLY SHAREABLE READ_WRITE
         BASETYPE SFUNC STYPE SFUNC1 STYPE1 SSPACE FINALFUNC FINALFUNC_EXTRA FINALFUNC_MODIFY COMBINEFUNC SERIALFUNC DESERIALFUNC
        	INITCOND MSFUNC MINVFUNC MSTYPE MSSPACE MFINALFUNC MFINALFUNC_EXTRA MFINALFUNC_MODIFY MINITCOND SORTOP
-	REFRESH MATERIALIZED RAISE
+	REFRESH MATERIALIZED RAISE WITHOUT
         );
 
     my @pg_types = qw(
-        BIGINT BIGSERIAL BIT BOOLEAN BOOL BOX BYTEA CHARACTER CHAR CIDR CIRCLE DATE DOUBLE INET INT INTEGER INTERVAL
-        JSON JSONB LINE LSEG MACADDR MACADDR8 MONEY NUMERIC PG_LSN POINT POLYGON REAL SMALLINT SMALLSERIAL
-       	SERIAL TEXT TIME TIMESTAMP TIMESTAMPTZ TSQUERY TSVECTOR TXID_SNAPSHOT UUID XML INT2 INT4 INT8 VARYING VARCHAR
-	ZONE
+        BIGINT BIGSERIAL BIT BOOLEAN BOOL BOX BYTEA CHARACTER CHAR CIDR CIRCLE DATE DOUBLE INET INTEGER INTERVAL
+        JSONB JSON LINE LSEG MACADDR8 MACADDR MONEY NUMERIC OID PG_LSN POINT POLYGON REAL SMALLINT SMALLSERIAL
+       	SERIAL TEXT TIME TIMESTAMPTZ TIMESTAMP TSQUERY TSVECTOR TXID_SNAPSHOT UUID XML INT2 INT4 INT8 INT VARYING
+	VARCHAR ZONE FLOAT4 FLOAT8 FLOAT
 	);
 
     my @sql_keywords = map { uc } qw(
@@ -3131,29 +3243,33 @@ sub set_dicts
         REAL RECHECK REF REGEXP RELATIVE RELEASE RLIKE ROW SEARCH SECOND SEQUENCES SESSION SHARE SIMPLE
         SMALLINT SONAME STANDALONE STATEMENT STATISTICS STATUS STORAGE STRAIGHT_JOIN SYSID TABLES TEMP TERMINATED
         TREAT TRUSTED TYPES UNENCRYPTED UNKNOWN UNSIGNED UNTIL USE VALID VALIDATE VALIDATOR VALUE VARIABLES VARYING
-        WHITESPACE WITHOUT WORK WRAPPER WRITE XMLATTRIBUTES YEAR YES ZONE
+        WHITESPACE WORK WRAPPER WRITE XMLATTRIBUTES YEAR YES ZONE
         );
 
     my @redshift_keywords =  map { uc } qw(
-        AES128 AES256 ALLOWOVERWRITE BACKUP BLANKSASNULL BYTEDICT BZIP2 CREDENTIALS CURRENT_USER_ID DEFLATE DEFRAG
-        DELTA DELTA32K DISABLE DISTKEY EMPTYASNULL ENABLE ENCODE ENCRYPT ENCRYPTION EXPLICIT GLOBALDICT256
-        GLOBALDICT64K GZIP INTERLEAVED LUN LUNS LZO LZOP MINUS MOSTLY13 MOSTLY32 MOSTLY8 NEW OFFLINE OFFSET OID OLD
-        PARALLEL PERCENT PERMISSIONS RAW READRATIO RECOVER REJECTLOG RESORT RESPECT RESTORE SORTKEY SYSDATE TAG TDES
-        TEXT255 TEXT32K TIMESTAMP TOP TRUNCATECOLUMNS WALLET
+	AES128 AES256 ALLOWOVERWRITE BACKUP BLANKSASNULL BYTEDICT BZIP2 CREDENTIALS CURRENT_USER_ID DEFLATE DEFRAG
+	DELTA DELTA32K DISABLE DISTKEY EMPTYASNULL ENABLE ENCODE ENCRYPT ENCRYPTION ESCAPE EXPLICIT GLOBALDICT256
+	GLOBALDICT64K GZIP INTERLEAVED LUN LUNS LZO LZOP MINUS MOSTLY13 MOSTLY32 MOSTLY8 NEW OFFLINE OFFSET OLD OID
+	PARALLEL PERCENT PERMISSIONS RAW READRATIO RECOVER REJECTLOG RESORT RESPECT RESTORE SORTKEY SYSDATE TAG TDES
+	TEXT255 TEXT32K TIMESTAMP TOP TRUNCATECOLUMNS UNLOAD WALLET ADDQUOTES
         );
+
+    if ($self->{ 'redshift' })
+    {
+        for my $k ( @redshift_keywords ) {
+            next if grep { $k eq $_ } @pg_keywords;
+            push @pg_keywords, $k;
+        }
+    }
 
     for my $k ( @pg_keywords ) {
         next if grep { $k eq $_ } @sql_keywords;
         push @sql_keywords, $k;
     }
 
-    for my $k ( @redshift_keywords ) {
-        next if grep { $k eq $_ } @sql_keywords;
-        push @sql_keywords, $k;
-    }
-
     my @pg_functions = map { lc } qw(
         ascii age bit_length btrim cardinality cast char_length character_length coalesce
+	brin_summarize_range brin_summarize_new_values
 	convert chr current_date current_time current_timestamp count decode date_part date_trunc
 	encode extract get_byte get_bit initcap isfinite interval justify_hours justify_days
         lower length lpad ltrim localtime localtimestamp md5 now octet_length overlay position pg_client_encoding
@@ -3303,20 +3419,21 @@ sub set_dicts
         interval_pl_timetz interval_recv interval_send interval_smaller interval_transform interval_um intervaltypmodin
         intervaltypmodout intinterval isclosed isempty ishorizontal iso8859_1_to_utf8 iso8859_to_utf8
         iso_to_koi8r iso_to_mic iso_to_win1251 iso_to_win866 isopen isparallel isperp
-        isvertical johab_to_utf8 json_agg jsonb_agg json_array_elements jsonb_array_elements json_array_elements_text jsonb_array_elements_text
+        isvertical johab_to_utf8 json_agg jsonb_agg json_array_elements jsonb_array_elements
+	json_array_elements_text jsonb_array_elements_text json_to_tsvector jsonb_insert 
         json_array_length jsonb_array_length json_build_array json_build_object json_each jsonb_each json_each_text
         jsonb_each_text json_extract_path jsonb_extract_path json_extract_path_text jsonb_extract_path_text json_in
 	json_object json_object_agg jsonb_object_agg json_object_keys jsonb_object_keys json_out json_populate_record
 	jsonb_populate_record json_populate_recordset jsonb_pretty jsonb_populate_recordset json_recv json_send
 	jsonb_set json_typeof jsonb_typeof json_to_record jsonb_to_record json_to_recordset jsonb_to_recordset
 	justify_interval koi8r_to_iso koi8r_to_mic koi8r_to_utf8 koi8r_to_win1251 koi8r_to_win866 koi8u_to_utf8
-	jsonb_path_query jsonb_build_object
+	jsonb_path_query jsonb_build_object jsonb_object jsonb_build_array jsonb_path_match jsonb_path_exists
         lag language_handler_in language_handler_out last_value lastval latin1_to_mic latin2_to_mic latin2_to_win1250
-        latin3_to_mic latin4_to_mic lead like_escape likejoinsel
+        latin3_to_mic latin4_to_mic lead like_escape likejoinsel jsonb_path_query_first jsonb_path_query_array
         likesel line line_distance line_eq line_horizontal line_in line_interpt
         line_intersect line_out line_parallel line_perp line_recv line_send line_vertical
-        ln lo_close lo_creat lo_create lo_export lo_import lo_lseek
-        lo_open lo_tell lo_truncate lo_unlink log loread lower_inc
+        ln lo_close lo_creat lo_create lo_export lo_import lo_lseek lo_compat lo_from_bytea lo_get lo_import_with_oid
+        lo_open lo_tell lo_truncate lo_unlink log lo_read lower_inc lo_seek64 lo_put lo_tell64 lo_truncate64 lo_write
         lower_inf lowrite lseg lseg_center lseg_distance lseg_eq lseg_ge
         lseg_gt lseg_horizontal lseg_in lseg_interpt lseg_intersect lseg_le lseg_length
         lseg_lt lseg_ne lseg_out lseg_parallel lseg_perp lseg_recv lseg_send
@@ -3325,9 +3442,9 @@ sub set_dicts
         macaddr_send makeaclitem make_interval make_tsrange masklen max mic_to_ascii mic_to_big5 mic_to_euc_cn
         mic_to_euc_jp mic_to_euc_kr mic_to_euc_tw mic_to_iso mic_to_koi8r mic_to_latin1 mic_to_latin2
         mic_to_latin3 mic_to_latin4 mic_to_sjis mic_to_win1250 mic_to_win1251 mic_to_win866 min
-        mktinterval mode mod money mul_d_interval name nameeq namege
-        namegt nameiclike nameicnlike nameicregexeq nameicregexne namein namele
-        namelike namelt namene namenlike nameout namerecv nameregexeq
+        mktinterval mode mod money mul_d_interval name nameeq namege make_timestamptz make_timestamp
+        namegt nameiclike nameicnlike nameicregexeq nameicregexne namein namele make_time make_date
+        namelike namelt namene namenlike nameout namerecv nameregexeq make_interval
         nameregexne namesend neqjoinsel neqsel netmask network network_cmp
         network_eq network_ge network_gt network_le network_lt network_ne network_sub
         network_subeq network_sup network_supeq nextval nlikejoinsel nlikesel notlike
@@ -3344,7 +3461,7 @@ sub set_dicts
         oidvectortypes on_pb on_pl on_ppath on_ps on_sb on_sl
         opaque_in opaque_out overlaps path path_add path_add_pt path_center
         path_contain_pt path_distance path_div_pt path_in path_inter path_length path_mul_pt
-        path_n_eq path_n_ge path_n_gt path_n_le path_n_lt path_npoints path_out
+        path_n_eq path_n_ge path_n_gt path_n_le path_n_lt path_npoints path_out parse_ident
         path_recv path_send path_sub_pt pclose percent_rank percentile_cont percentile_disc
 	pg_advisory_lock pg_advisory_lock_shared pg_advisory_unlock pg_advisory_unlock_all pg_advisory_unlock_shared
 	pg_advisory_xact_lock pg_advisory_xact_lock_shared pg_available_extension_versions pg_available_extensions
@@ -3407,10 +3524,11 @@ sub set_dicts
         prsd_start pt_contained_circle pt_contained_poly querytree
         quote_nullable radians radius random range_adjacent range_after range_before
         range_cmp range_contained_by range_contains range_contains_elem range_eq range_ge range_gist_compress
-        range_gist_consistent range_gist_decompress range_gist_penalty range_gist_picksplit range_gist_same range_gist_union range_gt
+        range_gist_consistent range_gist_decompress range_gist_penalty range_gist_picksplit range_gist_same
+	range_gist_union range_gt range_merge
         range_in range_intersect range_le range_lt range_minus range_ne range_out
         range_overlaps range_overleft range_overright range_recv range_send range_typanalyze range_union
-        rank record_eq record_ge record_gt record_in record_le record_lt
+        rank record_eq record_ge record_gt record_in record_le record_lt regexp_match
         record_ne record_out record_recv record_send regclass regclassin regclassout
         regclassrecv regclasssend regconfigin regconfigout regconfigrecv regconfigsend regdictionaryin
         regdictionaryout regdictionaryrecv regdictionarysend regexeqjoinsel regexeqsel regexnejoinsel regexnesel
@@ -3458,14 +3576,15 @@ sub set_dicts
         tintervalleneq tintervallenge tintervallengt tintervallenle tintervallenlt tintervallenne tintervallt
         tintervalne tintervalout tintervalov tintervalrecv tintervalrel tintervalsame tintervalsend
         tintervalstart to_json to_tsquery to_tsvector transaction_timestamp trigger_out trunc ts_debug
-        ts_headline ts_lexize ts_match_qv ts_match_tq ts_match_tt ts_match_vq ts_parse
-        ts_rank ts_rank_cd ts_rewrite ts_stat ts_token_type ts_typanalyze tsmatchjoinsel
+        ts_headline ts_lexize ts_match_qv ts_match_tq ts_match_tt ts_match_vq ts_parse ts_delete ts_filter
+        ts_rank ts_rank_cd ts_rewrite ts_stat ts_token_type ts_typanalyze tsmatchjoinsel tsquery_phrase
         tsmatchsel tsq_mcontained tsq_mcontains tsquery_and tsquery_cmp tsquery_eq tsquery_ge
-        tsquery_gt tsquery_le tsquery_lt tsquery_ne tsquery_not tsquery_or tsqueryin
-        tsqueryout tsqueryrecv tsquerysend tsrange tsrange_subdiff tstzrange tstzrange_subdiff
+        tsquery_gt tsquery_le tsquery_lt tsquery_ne tsquery_not tsquery_or tsqueryin websearch_to_tsquery
+        tsqueryout tsqueryrecv tsquerysend tsrange tsrange_subdiff tstzrange tstzrange_subdiff phraseto_tsquery
         tsvector_cmp tsvector_concat tsvector_eq tsvector_ge tsvector_gt tsvector_le tsvector_lt
         tsvector_ne tsvectorin tsvectorout tsvectorrecv tsvectorsend txid_current txid_current_snapshot
-        txid_snapshot_in txid_snapshot_out txid_snapshot_recv txid_snapshot_send txid_snapshot_xip txid_snapshot_xmax txid_snapshot_xmin
+        txid_snapshot_in txid_snapshot_out txid_snapshot_recv txid_snapshot_send txid_snapshot_xip
+	txid_snapshot_xmax txid_snapshot_xmin
         txid_visible_in_snapshot uhc_to_utf8 unknownin unknownout unknownrecv unknownsend unnest
         upper_inc upper_inf utf8_to_ascii utf8_to_big5 utf8_to_euc_cn utf8_to_euc_jis_2004 utf8_to_euc_jp
         utf8_to_euc_kr utf8_to_euc_tw utf8_to_gb18030 utf8_to_gbk utf8_to_iso8859 utf8_to_iso8859_1 utf8_to_johab

@@ -10,8 +10,7 @@ PERFORM my_nifty_function(id, name);
 `)
     ).to.equal(`\
 PERFORM
-    my_nifty_function (id,
-        name);
+    my_nifty_function (id, name);
 
 `);
   });
