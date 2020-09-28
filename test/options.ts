@@ -55,7 +55,7 @@ describe("options", function() {
   });
 
   it("placeholder", function() {
-    expect(buildCommandArguments({ placeholder: "/test123/" })).to.contain("--placeholder /test123/");
+    expect(buildCommandArguments({ placeholder: "/test123/" })).to.contain("--placeholder '/test123/'");
   });
 
   it("perlBinPath", function() {

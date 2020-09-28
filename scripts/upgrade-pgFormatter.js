@@ -2,6 +2,8 @@
 const path = require("path");
 const fs = require("fs");
 
+cd(__dirname);
+
 const latestRelease = JSON.parse(
   $(
     `curl -H "Authorization: token $GITHUB_API_TOKEN" -H "Content-Type: application/json" \
