@@ -67,4 +67,23 @@ FROM
    people
 `);
   });
+
+  it("formats a SQL using extraFunction file", function() {
+    let output = checkOutput(() => {
+      cli.exec([
+        "--noComment",
+        "--spaces=2",
+        "--functionCase=lowercase",
+        "--extraFunction=test/support/extraFunction",
+        "test/support/function.sql"
+      ])
+    })
+
+    expect(output.errors).to.be.empty
+    expect(output.logs[0]).to.equal(`\
+PERFORM
+  my_nifty_function(id, name);
+
+`);
+  });
 });

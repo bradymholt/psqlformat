@@ -14,4 +14,20 @@ PERFORM
 
 `);
   });
+
+  it("respects the extraFunction option", function() {
+    expect(
+      formatSql(
+        `\
+PERFORM my_nifty_function(id, name);
+\
+`,
+        { extraFunction: "test/support/extraFunction" }
+      )
+    ).to.equal(`\
+PERFORM
+    my_nifty_function(id, name);
+
+`);
+  });
 });

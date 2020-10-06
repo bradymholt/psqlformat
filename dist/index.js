@@ -94,6 +94,9 @@ function buildCommandArguments(options) {
     if (options.placeholder != null) {
         commandArgs += ` --placeholder '${options.placeholder}'`;
     }
+    if (options.extraFunction != null) {
+        commandArgs += ` --extra-function '${options.extraFunction}'`;
+    }
     return commandArgs;
 }
 exports.buildCommandArguments = buildCommandArguments;
