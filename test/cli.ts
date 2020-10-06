@@ -86,4 +86,20 @@ PERFORM
 
 `);
   });
+
+  it("formats a file using config file", function() {
+    let output = checkOutput(() => {
+      cli.exec(["--configFile=test/support/pg_format.conf", queryFilePath]);
+    });
+
+    expect(output.errors).to.be.empty;
+    expect(output.logs[0]).to.equal(`\
+/* This is a comment */
+SELECT
+    id,
+    first_name
+FROM
+    people
+`);
+  });
 });

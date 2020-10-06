@@ -75,6 +75,7 @@ Options:
   --wrapLimit      Wrap queries at a certain length                     [number]
   --placeholder    Regex to find code that must not be changed          [string]
   --extraFunction  Path to file containing a list of function names     [string]
+  --configFile     Specify a pg_format config file                      [string]
   --perlBinPath    The path to the perl executable    [string] [default: "perl"]
 ```
 
@@ -125,6 +126,7 @@ let formatted = psqlformat.formatSql("select id from people", {
   formatType
   placeholder
   extraFunction
+  configFile
   perlBinPath
   */
 });

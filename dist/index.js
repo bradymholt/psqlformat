@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.buildCommandArguments = exports.buildCommand = exports.CaseOptionEnum = exports.formatSql = exports.formatFiles = void 0;
 const path = require("path");
 const fs = require("fs");
 const globby = require("globby");
@@ -46,7 +47,7 @@ function formatSql(sqlText, options = {}) {
 }
 exports.formatSql = formatSql;
 var options_1 = require("./options");
-exports.CaseOptionEnum = options_1.CaseOptionEnum;
+Object.defineProperty(exports, "CaseOptionEnum", { enumerable: true, get: function () { return options_1.CaseOptionEnum; } });
 function buildCommand(options) {
     let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
     let commandArgs = buildCommandArguments(options);
@@ -96,6 +97,9 @@ function buildCommandArguments(options) {
     }
     if (options.extraFunction != null) {
         commandArgs += ` --extra-function '${options.extraFunction}'`;
+    }
+    if (options.configFile != null) {
+        commandArgs += ` --config '${options.configFile}'`;
     }
     return commandArgs;
 }
