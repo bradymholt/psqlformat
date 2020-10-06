@@ -102,4 +102,16 @@ FROM
     people
 `);
   });
+
+  it("uses the pgFormatterPath option", function() {
+    let output = checkOutput(() => {
+      cli.exec(["--pgFormatterPath=test/support/hello_world", queryFilePath]);
+
+    });
+
+    expect(output.errors).to.be.empty;
+    expect(output.logs[0]).to.equal(`\
+Hello, World!
+`);
+  });
 });

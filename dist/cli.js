@@ -86,6 +86,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             type: "string",
             default: "perl",
             describe: "The path to the perl executable"
+        },
+        pgFormatterPath: {
+            type: "string",
+            describe: "Path to a custom pg_format version"
         }
     })
         .demandCommand(1, "").argv;

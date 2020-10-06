@@ -17,8 +17,7 @@ PERFORM
 
   it("respects the extraFunction option", function() {
     expect(
-      formatSql(
-        `\
+      formatSql(`\
 PERFORM my_nifty_function(id, name);
 \
 `,
@@ -31,10 +30,9 @@ PERFORM
 `);
   });
 
-  it("returns respects the configFile option", function() {
+  it("respects the configFile option", function() {
     expect(
-      formatSql(
-        `\
+      formatSql(`\
 -- comment
 PERFORM my_nifty_function(id, name);
 \
@@ -46,6 +44,17 @@ PERFORM my_nifty_function(id, name);
 PERFORM
     my_nifty_function (id, name);
 
+`);
+  });
+
+  it("respects the pgFormatterPath option", function() {
+    expect(
+      formatSql(`\
+PERFORM my_nifty_function(id, name);
+\
+`, { pgFormatterPath: 'test/support/hello_world' })
+    ).to.equal(`\
+Hello, World!
 `);
   });
 });

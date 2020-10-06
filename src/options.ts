@@ -17,6 +17,7 @@ export interface IOptions {
   configFile?: string;
 
   perlBinPath?: string;
+  pgFormatterPath?: string;
 }
 
 export enum CaseOptionEnum {

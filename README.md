@@ -52,31 +52,34 @@ in-place)
 
 
 Options:
-  --help           Show help                                           [boolean]
-  --version        Show version number                                 [boolean]
-  --write          Edit files in-place. (Beware!)                      [boolean]
-  --spaces         Number of spaces to indent the code     [number] [default: 4]
-  --tabs           Use tabs instead of spaces (spaces option is ignored)
+  --help             Show help                                         [boolean]
+  --version          Show version number                               [boolean]
+  --write            Edit files in-place. (Beware!)                    [boolean]
+  --spaces           Number of spaces to indent the code   [number] [default: 4]
+  --tabs             Use tabs instead of spaces (spaces option is ignored)
                                                                        [boolean]
-  --maxLength      Maximum length of a query                            [number]
-  --commaStart     Use preceding comma in parameter list               [boolean]
-  --commaBreak     In insert statement, add a newline after each comma [boolean]
-  --commaEnd       Use trailing comma in parameter list[boolean] [default: true]
-  --noComment      Remove any comments                                 [boolean]
-  --functionCase   Case of the function names
+  --maxLength        Maximum length of a query                          [number]
+  --commaStart       Use preceding comma in parameter list             [boolean]
+  --commaBreak       In insert statement, add a newline after each comma
+                                                                       [boolean]
+  --commaEnd         Use trailing comma in parameter list
+                                                       [boolean] [default: true]
+  --noComment        Remove any comments                               [boolean]
+  --functionCase     Case of the function names
          [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
                                                           [default: "unchanged"]
-  --noGrouping     Add a newline between statements in transaction regroupement
-                                                      [boolean] [default: false]
-  --keywordCase    Case of the reserved keywords
+  --noGrouping       Add a newline between statements in transaction
+                     regroupement                     [boolean] [default: false]
+  --keywordCase      Case of the reserved keywords
          [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
                                                           [default: "uppercase"]
-  --formatType     Use another formatting type for some statements     [boolean]
-  --wrapLimit      Wrap queries at a certain length                     [number]
-  --placeholder    Regex to find code that must not be changed          [string]
-  --extraFunction  Path to file containing a list of function names     [string]
-  --configFile     Specify a pg_format config file                      [string]
-  --perlBinPath    The path to the perl executable    [string] [default: "perl"]
+  --formatType       Use another formatting type for some statements   [boolean]
+  --wrapLimit        Wrap queries at a certain length                   [number]
+  --placeholder      Regex to find code that must not be changed        [string]
+  --extraFunction    Path to file containing a list of function names   [string]
+  --configFile       Specify a pg_format config file                    [string]
+  --perlBinPath      The path to the perl executable  [string] [default: "perl"]
+  --pgFormatterPath  Path to a custom pg_format version                 [string]
 ```
 
 ## Module usage
@@ -128,6 +131,7 @@ let formatted = psqlformat.formatSql("select id from people", {
   extraFunction
   configFile
   perlBinPath
+  pgFormatterPath
   */
 });
 
