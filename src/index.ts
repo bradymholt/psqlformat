@@ -117,5 +117,9 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += ` --placeholder '${options.placeholder}'`;
   }
 
+  if (options.extraFunction != null) {
+    commandArgs += ` --extra-function '${options.extraFunction}'`
+  }
+
   return commandArgs;
 }

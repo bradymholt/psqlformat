@@ -13,6 +13,7 @@ export interface IOptions {
   formatType?: boolean;
   wrapLimit?: number;
   placeholder?: string;
+  extraFunction?: string;
 
   perlBinPath?: string;
 }

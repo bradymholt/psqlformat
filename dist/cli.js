@@ -74,6 +74,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             type: "string",
             describe: "Regex to find code that must not be changed"
         },
+        extraFunction: {
+            type: "string",
+            describe: "Path to file containing a list of function names"
+        },
         perlBinPath: {
             type: "string",
             default: "perl",
