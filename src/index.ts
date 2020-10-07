@@ -23,7 +23,7 @@ export function formatFiles(
     let command = `${buildCommand(options)} ${path}`;
     // Run pgFormatter
     let output = execSync(command, {
-      encoding: "utf8"
+      encoding: "utf8",
     });
 
     const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
@@ -50,7 +50,7 @@ export function formatSql(sqlText: string, options: IOptions = {}) {
   // Pass sqlText in as stdin and run pgFormatter
   let formatted = execSync(command, {
     encoding: "utf8",
-    input: sqlText
+    input: sqlText,
   });
   return formatted;
 }
@@ -109,8 +109,8 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += ` --format-type`;
   }
 
-  if (options.wrapLimit){
-    commandArgs += ` --wrap-limit ${options.wrapLimit}`
+  if (options.wrapLimit) {
+    commandArgs += ` --wrap-limit ${options.wrapLimit}`;
   }
 
   if (options.placeholder != null) {

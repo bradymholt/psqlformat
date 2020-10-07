@@ -1,7 +1,7 @@
 import { formatSql, formatFiles } from "../src/index";
 import { expect } from "chai";
 
-describe("formatting", function() {
+describe("formatting", function () {
   it("returns formatted SQL given SQL text", function () {
     expect(
       formatSql(`\
@@ -15,9 +15,10 @@ PERFORM
 `);
   });
 
-  it("respects the extraFunction option", function() {
+  it("respects the extraFunction option", function () {
     expect(
-      formatSql(`\
+      formatSql(
+        `\
 PERFORM my_nifty_function(id, name);
 \
 `,
@@ -30,9 +31,10 @@ PERFORM
 `);
   });
 
-  it("respects the configFile option", function() {
+  it("respects the configFile option", function () {
     expect(
-      formatSql(`\
+      formatSql(
+        `\
 -- comment
 PERFORM my_nifty_function(id, name);
 \
@@ -47,12 +49,15 @@ PERFORM
 `);
   });
 
-  it("respects the pgFormatterPath option", function() {
+  it("respects the pgFormatterPath option", function () {
     expect(
-      formatSql(`\
+      formatSql(
+        `\
 PERFORM my_nifty_function(id, name);
 \
-`, { pgFormatterPath: 'test/support/hello_world' })
+`,
+        { pgFormatterPath: "test/support/hello_world" }
+      )
     ).to.equal(`\
 Hello, World!
 `);

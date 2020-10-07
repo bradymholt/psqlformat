@@ -24,5 +24,5 @@ export enum CaseOptionEnum {
   unchanged = 0,
   lowercase = 1,
   uppercase = 2,
-  capitalize = 3
+  capitalize = 3,
 }

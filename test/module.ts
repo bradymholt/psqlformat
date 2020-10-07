@@ -5,8 +5,8 @@ import { expect } from "chai";
 const queryFilePath = "test/support/query.sql";
 const queryFile2Path = "test/support/query2.sql";
 
-describe("module", function() {
-  it("returns formatted SQL given SQL text", function() {
+describe("module", function () {
+  it("returns formatted SQL given SQL text", function () {
     expect(formatSql("SELECT id FROM animals")).to.equal(`\
 SELECT
     id
@@ -15,7 +15,7 @@ FROM
 `);
   });
 
-  it("uses tabs", function() {
+  it("uses tabs", function () {
     expect(formatSql("SELECT id FROM animals", { tabs: true })).to.equal(`\
 SELECT
 \tid
@@ -24,8 +24,7 @@ FROM
 `);
   });
 
-
-  it("returns formatted SQL given a file path", function() {
+  it("returns formatted SQL given a file path", function () {
     let output = formatFiles(queryFilePath, false, { noComment: true, spaces: 2 });
     expect(output).to.equal(`\
 SELECT
@@ -36,12 +35,12 @@ FROM
 `);
   });
 
-  it("formats a file in-place", function() {
+  it("formats a file in-place", function () {
     const tmpFile = "test/support/module_test.sql";
     fs.copyFileSync(queryFilePath, tmpFile);
 
     let logContents = "";
-    let testLog = function(message: string) {
+    let testLog = function (message: string) {
       logContents += message;
     };
     let output = formatFiles(tmpFile, true, { noComment: true, spaces: 3 }, testLog);
@@ -60,12 +59,12 @@ FROM
 `);
   });
 
-  it("formats a file with in-place and removes dash-dash comments", function() {
+  it("formats a file with in-place and removes dash-dash comments", function () {
     const tmpFile = "test/support/module_test.sql";
     fs.copyFileSync(queryFile2Path, tmpFile);
 
     let logContents = "";
-    let testLog = function(message: string) {
+    let testLog = function (message: string) {
       logContents += message;
     };
     let output = formatFiles(tmpFile, true, { noComment: true, spaces: 3 }, testLog);
