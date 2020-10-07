@@ -1,5 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
+exports.CaseOptionEnum = void 0;
 var CaseOptionEnum;
 (function (CaseOptionEnum) {
     CaseOptionEnum[CaseOptionEnum["unchanged"] = 0] = "unchanged";

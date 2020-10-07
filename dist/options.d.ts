@@ -14,6 +14,7 @@ export interface IOptions {
     wrapLimit?: number;
     placeholder?: string;
     extraFunction?: string;
+    configFile?: string;
     perlBinPath?: string;
 }
 export declare enum CaseOptionEnum {

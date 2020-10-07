@@ -118,7 +118,11 @@ export function buildCommandArguments(options: IOptions) {
   }
 
   if (options.extraFunction != null) {
-    commandArgs += ` --extra-function '${options.extraFunction}'`
+    commandArgs += ` --extra-function '${options.extraFunction}'`;
+  }
+
+  if (options.configFile != null) {
+    commandArgs += ` --config '${options.configFile}'`;
   }
 
   return commandArgs;

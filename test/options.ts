@@ -62,7 +62,11 @@ describe("options", function() {
     expect(buildCommandArguments({ extraFunction: "/test123/test456" })).to.contain(
       "--extra-function '/test123/test456'"
     )
-  })
+  });
+
+  it("configFile", function() {
+    expect(buildCommandArguments({ configFile: "/test123/conf" })).to.contain("--config '/test123/conf'");
+  });
 
   it("perlBinPath", function() {
     expect(buildCommand({ perlBinPath: '/usr/bin/custom' })).contain("/usr/bin/custom");
