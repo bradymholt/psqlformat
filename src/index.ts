@@ -58,7 +58,7 @@ export function formatSql(sqlText: string, options: IOptions = {}) {
 export { IOptions, CaseOptionEnum } from "./options";
 
 export function buildCommand(options: IOptions) {
-  let pgFormatterPath = path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
+  let pgFormatterPath = options.pgFormatterPath || path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
   let commandArgs = buildCommandArguments(options);
 
   return `${options.perlBinPath || "perl"} ${pgFormatterPath} ${commandArgs}`;

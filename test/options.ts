@@ -72,4 +72,9 @@ describe("options", function() {
     expect(buildCommand({ perlBinPath: '/usr/bin/custom' })).contain("/usr/bin/custom");
     expect(buildCommand({ perlBinPath: '/usr/bin/custom' })).to.not.contain("perl");
   });
+
+  it("pgFormatterPath", function() {
+    expect(buildCommand({ pgFormatterPath: '/usr/bin/custom' })).contain("/usr/bin/custom");
+    expect(buildCommand({ pgFormatterPath: '/usr/bin/custom' })).to.not.contain("pg_format");
+  });
 });
