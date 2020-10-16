@@ -21,14 +21,14 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
+          registry-url: "https://registry.npmjs.org"
       - run: npm install
       - name: Version
         run: |
           npm run prerelease
           npm version minor --force -m "Version %s [build-skip]"
-      - name: Publish to npm
-        uses: JS-DevTools/npm-publish@v1
-        with:
-          token: ${{ secrets.NODE_AUTH_TOKEN }}
+          npm publish --access public
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NODE_AUTH_TOKEN }}
       - name: Push release commit and tag to GitHub
         run: git push gh-origin HEAD:master --tags
