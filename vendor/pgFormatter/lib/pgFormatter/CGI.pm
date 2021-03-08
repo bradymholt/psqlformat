@@ -11,12 +11,12 @@ pgFormatter::CGI - Implementation of CGI-BIN script to format SQL queries.
 
 =head1 VERSION
 
-Version 4.4
+Version 5.0
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '4.4';
+our $VERSION = '5.0';
 
 use pgFormatter::Beautify;
 use File::Basename;
@@ -109,7 +109,7 @@ sub set_config {
     $self->{ 'show_example' } = 0;
     $self->{ 'project_url' }  = 'https://github.com/darold/pgFormatter';
     $self->{ 'service_url' }  = '';
-    $self->{ 'download_url' } = 'http://sourceforge.net/projects/pgformatter/';
+    $self->{ 'download_url' } = 'https://github.com/darold/pgFormatter/releases';
 
     if (-f $self->{ 'config' })
     {
@@ -495,7 +495,17 @@ qq{<textarea name="original_content" id="originalcontent" style="display: none;"
     </td></tr>
     <tr><td>
     <div class="footer"> Service provided by <a href="$self->{ 'download_url' }" target="_new">$self->{ 'program_name' } $VERSION</a>. Development code available on <a href="$self->{ 'project_url' }" target="_new">GitHub.com</a> </div>
-    </td></tr></table>
+    </td></tr>
+};
+
+    # Add external file with html code at bottom of the page
+    # used to display ads or anything else below the text area
+    my $ad_content = $self->_load_optional_file( $self->{ 'bottom_ad_file' } );
+    $ad_content ||= '<br/>';
+
+    print qq{
+    <tr><td>$ad_content</td></tr>
+    </table>
     </td></tr></table> </form>
 };
 
@@ -511,14 +521,7 @@ Outputs footer of the page
 sub print_footer {
     my $self = shift;
 
-    # Add external file with html code at bottom of the page
-    # used to display ads or anything else below the text area
-    my $ad_content = $self->_load_optional_file( $self->{ 'bottom_ad_file' } );
-    $ad_content ||= '<br/>';
-
-    print $ad_content;
-    print
-    qq{<p>&nbsp;</p>};
+    print qq{<p>&nbsp;</p>};
     print " </div> </body> </html>\n";
     return;
 }
@@ -617,7 +620,7 @@ if (objtextarea.value.length > maxlength) {
 <a href="$self->{ 'service_url' }"><img class="logo" src="logo_pgformatter.png"/></a><p>pgFormatter</p>
 </div>
 </td><td width="1000">
-Free Online version of $self->{ 'program_name' } a PostgreSQL SQL syntax beautifier (no line limit here up to $self->{ 'maxlength' } characters).  This SQL formatter/beautifier supports keywords from SQL-92, SQL-99, SQL-2003, SQL-2008, SQL-2011 and PostgreSQL specifics keywords.  May works with any other databases too.
+Free Online version of $self->{ 'program_name' } a PostgreSQL SQL syntax beautifier (no line limit here up to $self->{ 'maxlength' } characters).  This SQL formatter/beautifier supports keywords from SQL-92, SQL-99, SQL-2003, SQL-2008, SQL-2011 and PostgreSQL specifics keywords.  May work with any other databases too.
 </td>
 </tr>
 </table>
@@ -641,7 +644,7 @@ Please report any bugs or feature requests to: https://github.com/darold/pgForma
 
 =head1 COPYRIGHT
 
-Copyright 2012-2020 Gilles Darold. All rights reserved.
+Copyright 2012-2021 Gilles Darold. All rights reserved.
 
 =head1 LICENSE
 

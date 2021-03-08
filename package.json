@@ -55,6 +55,7 @@
     "start": "ts-node src/bin.ts test/support/query.sql",
     "prerelease": "tsc",
     "release": "npx npm-github-release",
-    "format": "npx prettier --write ./**/*.ts"
+    "format": "npx prettier --write ./**/*.ts",
+    "upgrade": "./scripts/upgrade-pgFormatter.js"
   }
 }
