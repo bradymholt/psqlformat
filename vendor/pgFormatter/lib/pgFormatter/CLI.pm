@@ -6,7 +6,7 @@ use warnings;
 # UTF8 boilerplace, per http://stackoverflow.com/questions/6162484/why-does-modern-perl-avoid-utf-8-by-default/
 use warnings qw( FATAL );
 use utf8;
-use open qw( :std );
+use open qw( :std :encoding(UTF-8) );
 use Encode qw( decode );
 
 =head1 NAME
@@ -15,12 +15,12 @@ pgFormatter::CLI - Implementation of command line program to format SQL queries.
 
 =head1 VERSION
 
-Version 5.0
+Version 5.2
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '5.0';
+our $VERSION = '5.2';
 
 use autodie;
 use pgFormatter::Beautify;
@@ -60,17 +60,29 @@ it, and output.
 sub run {
     my $self = shift;
     $self->get_command_line_args();
-    $self->validate_args();
-    $self->logmsg( 'DEBUG', 'Starting to parse SQL file: %s', $self->{ 'cfg' }->{ 'input' } );
-    $self->load_sql();
-    $self->logmsg( 'DEBUG', 'Beautifying' );
-    $self->beautify();
-    if ($self->{'wrap_limit'}) {
-            $self->logmsg( 'DEBUG', 'Wrap query' );
-            $self->wrap_lines($self->{'wrap_comment'});
+
+    $self->show_help_and_die( 2, 'can not use multiple input files with -i | --inplace.' ) if (@ARGV > 1 && $self->{ 'cfg' }->{ 'inplace' } == 0);
+
+    my @inputs = @ARGV == 0 ? ('-') : @ARGV;
+
+    foreach my $input (@inputs)
+    {
+        $self->{ 'cfg' }->{ 'input' } = $input;
+        $self->{ 'cfg' }->{ 'output' } = '-'; # Set output to default value.
+
+        $self->validate_args();
+        $self->logmsg( 'DEBUG', 'Starting to parse SQL file: %s', $self->{ 'cfg' }->{ 'input' } );
+        $self->load_sql();
+        $self->logmsg( 'DEBUG', 'Beautifying' );
+        $self->beautify();
+        if ($self->{'wrap_limit'}) {
+                $self->logmsg( 'DEBUG', 'Wrap query' );
+                $self->wrap_lines($self->{'wrap_comment'});
+        }
+        $self->logmsg( 'DEBUG', 'Writing output' );
+        $self->save_output();
     }
-    $self->logmsg( 'DEBUG', 'Writing output' );
-    $self->save_output();
+
     return;
 }
 
@@ -108,6 +120,7 @@ sub beautify {
     $args{ 'config' }       = $self->{ 'cfg' }->{ 'config' };
     $args{ 'no_rcfile' }    = $self->{ 'cfg' }->{ 'no-rcfile' };
     $args{ 'inplace' }      = $self->{ 'cfg' }->{ 'inplace' };
+    $args{ 'keep_newline' } = $self->{ 'cfg' }->{ 'keep-newline' };
     $args{ 'extra_function' } = $self->{ 'cfg' }->{ 'extra-function' };
 
     if ($self->{ 'query' } && ($args{ 'maxlength' } && length($self->{ 'query' }) > $args{ 'maxlength' })) {
@@ -156,11 +169,11 @@ sub save_output {
     if ( $self->{ 'cfg' }->{ 'output' } ne '-' ) {
         $self->logmsg( 'DEBUG', 'Formatted SQL queries will be written to stdout' );
         open $fh, '>', $self->{ 'cfg' }->{ 'output' };
-    } else {  
+    } else {
         $fh = \*STDOUT;
     }
     print $fh $self->{ 'ready' };
-    close $fh;
+    close $fh if ( $self->{ 'cfg' }->{ 'output' } ne '-' );
     return;
 }
 
@@ -204,7 +217,7 @@ Usage: $program_name [options] file.sql
 
 Arguments:
 
-    file.sql can be a file or use - to read query from stdin.
+    file.sql can be a file, multiple files or use - to read query from stdin.
 
     Returning the SQL formatted to stdout or into a file specified with
     the -o | --output option.
@@ -227,7 +240,8 @@ Options:
     -g | --nogrouping     : add a newline between statements in transaction
                             regroupement. Default is to group statements.
     -h | --help           : show this message and exit.
-    -i | --inplace        : override input file with formatted content.
+    -i | --inplace        : override input files with formatted content.
+    -k | --keep-newline   : preserve empty line in plpgsql code.
     -L | --no-extra-line  : do not add an extra empty line at end of the output.
     -m | --maxlength SIZE : maximum length of a query, it will be cutted above
                             the given size. Default: no truncate.
@@ -289,8 +303,9 @@ sub load_sql {
     } else {
         $fh = \*STDIN;
     }
+    binmode($fh, ":encoding(utf8)");
     $self->{ 'query' } = <$fh>;
-    close $fh;
+    close $fh if ( $self->{ 'cfg' }->{ 'input' } ne '-' );
     return;
 }
 
@@ -317,6 +332,7 @@ sub get_command_line_args
         'nogrouping|g!',
         'help|h!',
         'function-case|f=i',
+        'keep-newline|k!',
         'no-extra-line|L!',
         'maxlength|m=i',
         'multiline|M!',
@@ -347,8 +363,13 @@ sub get_command_line_args
         exit 0;
     }
 
-    if ( !$cfg{ 'no-rcfile' } ) {
-        $cfg{ 'config' } //= (exists  $ENV{HOME}) ? "$ENV{HOME}/.pg_format" : ".pg_format";
+    if ( !$cfg{ 'no-rcfile' } )
+    {
+	if (-e ".pg_format") {
+		$cfg{ 'config' } //= ".pg_format";
+	} else {
+		$cfg{ 'config' } //= (exists  $ENV{HOME}) ? "$ENV{HOME}/.pg_format" : ".pg_format";
+	}
     }
 
     if ( defined $cfg{ 'config' } && -f $cfg{ 'config' } )
@@ -414,8 +435,6 @@ sub get_command_line_args
         printf 'FATAL: file for extra function list does not exists: %s%s', $cfg{ 'extra-function' } , "\n";
         exit 0;
     }
-
-    $cfg{ 'input' } = $ARGV[ 0 ] // '-';
 
     $self->{ 'cfg' } = \%cfg;
 

@@ -1,9 +1,9 @@
 {
-  "url": "https://api.github.com/repos/darold/pgFormatter/releases/37911579",
-  "assets_url": "https://api.github.com/repos/darold/pgFormatter/releases/37911579/assets",
-  "upload_url": "https://uploads.github.com/repos/darold/pgFormatter/releases/37911579/assets{?name,label}",
-  "html_url": "https://github.com/darold/pgFormatter/releases/tag/v5.0",
-  "id": 37911579,
+  "url": "https://api.github.com/repos/darold/pgFormatter/releases/54610414",
+  "assets_url": "https://api.github.com/repos/darold/pgFormatter/releases/54610414/assets",
+  "upload_url": "https://uploads.github.com/repos/darold/pgFormatter/releases/54610414/assets{?name,label}",
+  "html_url": "https://github.com/darold/pgFormatter/releases/tag/v5.2",
+  "id": 54610414,
   "author": {
     "login": "darold",
     "id": 538862,
@@ -24,16 +24,16 @@
     "type": "User",
     "site_admin": false
   },
-  "node_id": "MDc6UmVsZWFzZTM3OTExNTc5",
-  "tag_name": "v5.0",
+  "node_id": "RE_kwDOAG8-Ws4DQUnu",
+  "tag_name": "v5.2",
   "target_commitish": "master",
-  "name": "Version 5.0",
+  "name": "Version 5.2",
   "draft": false,
   "prerelease": false,
-  "created_at": "2021-02-11T10:37:22Z",
-  "published_at": "2021-02-11T10:39:21Z",
+  "created_at": "2021-12-03T21:46:19Z",
+  "published_at": "2021-12-03T21:50:03Z",
   "assets": [],
-  "tarball_url": "https://api.github.com/repos/darold/pgFormatter/tarball/v5.0",
-  "zipball_url": "https://api.github.com/repos/darold/pgFormatter/zipball/v5.0",
-  "body": "February 11 2021 - v5.0\r\n\r\nThis major release fixes issues reported by users since the last six months with some improvements and new features.\r\n\r\nNew options and features:\r\n\r\n  * Add new option -M | --multiline to enable multi-line search with placeholder regexp specified at command line with -p or --placeholder.\r\n  * Fix improper handling of constants between quotes in all kind of queries and especially in function body. They were sometime corrupted by extra space before of after single quotes or some words was identified as keywords and turned upper case.\r\n  * Add keywords ALWAYS, DISABLE, ENABLE, LEVEL and STORED.\r\n  * Improve formatting of CREATE POLICY which doesn't the need anymore that alternate formatting (-t) be enabled.\r\n  * More fix of false positive keywords detection following their place.\r\n  * Add REGCLASS, REGCONFIG, REGDICTIONARY, REGNAMESPACE, REGOPER, REGOPERATOR, REGPROC, REGPROCEDURE, REGROLE, REGTYPE, to list of data types.\r\n\r\nHere is the complete list of changes and acknowledgments:\r\n\r\n  - Fix false positive detection of keyword following their place. Thanks to allprecisely for the report.\r\n  - Add quick regression test for constant handling.\r\n  - Fix formatting for RAISE, CAST and EXCEPTION.\r\n  - Fix case of NEW/OLD in triggers code\r\n  - Fix improper handling of columns and tables aliases between double quotes.\r\n  - Don't assume HOME variable exists in Makefile.PL. Thanks to Samyak Bakliwal for the patch.\r\n  - Add new option -M | --multiline to enable multi-line search with placeholder regexp specified at command line with -p or --placeholder. Thanks to Taro Sato for the feature request.\r\n  - Fix generated columns formatting. Thanks to Oliver Ni for the report.\r\n  - Include regression test to not wrap URL hint and update the  documentation.\r\n  - Adding example for regular expression preserving the URL and  to prevent it from being wrapped. Thanks to Clement Aubert for the patch.\r\n  - Improve RLS policy formatting when alternate format is enabled. Thanks to madflow for the report.\r\n  - Fix formatting of numbers with signed exponents. Thanks to Jakob Egger for the report.\r\n  - Fix HTML footer in CGI mode.\r\n  - Fix formatting of CREATE TABLE using a CTE. Thanks to prichardson211 for the report.\r\n  - Replace deprecated TG_RELNAME with TG_TABLE_NAME. Thanks to Andreas Karlsson fot the patch.\r\n  - Fix regression in COPY formatting. Thanks to Paul Melnikow for the report.\r\n  - Fix CTE formatting with NOT MATERIALIZED clause. Thanks to Sergey Shepelev for the report.\r\n  - Update regression tests with the addition of oid types and fix  for C functions formatting.\r\n  - Fix error format string for extra-function and 2 typos. Thanks to Sven Klemm for the patch.\r\n  - Fix formatting for C functions with obj_file and link_symbol. Thanks to Sven Klemm for the patch.\r\n  - Fix typo in CGI text. Thanks to Justin Hawkins for the report.\r\n  - Add oid types to list of data types. Thanks to Sven Klemm for the patch."
+  "tarball_url": "https://api.github.com/repos/darold/pgFormatter/tarball/v5.2",
+  "zipball_url": "https://api.github.com/repos/darold/pgFormatter/zipball/v5.2",
+  "body": "December 03 2021 - v5.2\r\n\r\nThis maintenance release fixes issues reported by users since the last three months with some improvements and new features.\r\n\r\nNew options and features:\r\n\r\n  * Allow to pass multiple files when using --inplace. Thanks to mieszko4 for the patch.\r\n  * Add a button to copy formatted text to clipboard in the CGI interface. Thanks to Yan Sheng for the feature request.\r\n\r\nHere is the complete list of changes and acknowledgments:\r\n\r\n  - Fix bad formatting of materialized view ddl with parameters. Thanks to Wilson Lin for the report.\r\n  - Fix/unicode and --inplace argument causing an error. Thanks to mieszko4 for the patch.\r\n  - Fix anonymizing disabled in last version. Thanks to Nikolas Poniros for the report.\r\n  - Correctly format casts to quoted types. Thanks to Adam Vartanian for the patch.\r\n"
 }
