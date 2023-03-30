@@ -11,12 +11,12 @@ pgFormatter::CGI - Implementation of CGI-BIN script to format SQL queries.
 
 =head1 VERSION
 
-Version 5.2
+Version 5.5
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '5.2';
+our $VERSION = '5.5';
 
 use pgFormatter::Beautify;
 use File::Basename;
@@ -153,6 +153,10 @@ sub set_config {
     $self->{ 'colorize' }     //= 1;
     $self->{ 'keep_newline' } //= 0;
     $self->{ 'extra_function' }//= '';
+    $self->{ 'extra_keyword' } //= '';
+    $self->{ 'no_space_function' } //= 0;
+    # Backward compatibility
+    $self->{ 'extra_keyword' } = 'redshift' if (!$self->{ 'extra_keyword' } && $self->{ 'redshift' });
 
     if ($self->{ 'tabs' })
     {
@@ -215,7 +219,7 @@ sub get_params {
     # shortcut
     my $cgi = $self->{ 'cgi' };
 
-    for my $param_name ( qw( colorize spaces uc_keyword uc_function uc_type content nocomment nogrouping show_example anonymize separator comma comma_break format_type wrap_after original_content numbering redshifti keep_newline) ) {
+    for my $param_name ( qw( colorize spaces uc_keyword uc_function uc_type content nocomment nogrouping show_example anonymize separator comma comma_break format_type wrap_after original_content numbering redshift keep_newline no_space_function) ) {
         $self->{ $param_name } = $cgi->param( $param_name ) if defined $cgi->param( $param_name );
     }
 
@@ -271,8 +275,9 @@ sub sanitize_params {
     $self->{ 'format_type' }  = 0 if ($self->{ 'format_type' } !~ /^(0|1)$/);
     $self->{ 'wrap_after' }   = 0 if ($self->{ 'wrap_after' } !~ /^\d{1,2}$/);
     $self->{ 'numbering' }    = 0 if ($self->{ 'numbering' } !~ /^\d{1,2}$/);
-    $self->{ 'redshift' }     = 0 if $self->{ 'redshift' } !~ /^(0|1)$/;
-    $self->{ 'keep_newline' }   = 0 if $self->{ 'keep_newline' } !~ /^(0|1)$/;
+    $self->{ 'redshift' }     = 0 if ($self->{ 'redshift' } !~ /^(0|1)$/);
+    $self->{ 'keep_newline' }   = 0 if ($self->{ 'keep_newline' } !~ /^(0|1)$/);
+    $self->{ 'no_space_function' } = 0 if ($self->{ 'no_space_function' } !~ /^(0|1)$/);
 
     if ( $self->{ 'show_example' } ) {
         $self->{ 'content' } = q{
@@ -320,6 +325,7 @@ sub beautify_query {
     $args{ 'numbering' }    = 1 if $self->{ 'numbering' };
     $args{ 'redshift' }     = 1 if $self->{ 'redshift' };
     $args{ 'keep_newline' } = 1 if $self->{ 'keep_newline' };
+    $args{ 'no_space_function' } = 1 if $self->{ 'no_space_function' };
 
     $self->{ 'content' } = &remove_extra_parenthesis($self->{ 'content' } ) if ($self->{ 'content' } );
 
@@ -339,6 +345,24 @@ sub beautify_query {
 		    warn("WARNING: can not read file $self->{ 'extra_function' }\n");
 	    }
     }
+    if ($self->{ 'extra_keyword' } && $self->{ 'extra_keyword' } ne 'redshift' && -e $self->{ 'extra_keyword' })
+    {
+	    if (open(my $fh, '<', $self->{ 'extra_keyword' }))
+	    {
+		    my @fcts = ();
+		    while (my $l = <$fh>) {
+			    chomp($l);
+			    push(@fcts, split(/^[\s,;]+$/, $l));
+		    }
+		    $beautifier->add_keywords(@fcts);
+		    close($fh);
+	    } else {
+		    warn("WARNING: can not read file $self->{ 'extra_keyword' }\n");
+	    }
+    } elsif ($self->{ 'extra_keyword' } eq 'redshift' or $self->{ 'redshift' }) {
+	    $beautifier->add_keywords(@{ $beautifier->{ 'dict' }->{ 'redshift_keywords' } });
+    }
+
     $beautifier->query( $self->{ 'content' } );
     $beautifier->anonymize() if $self->{ 'anonymize' };
     $beautifier->beautify();
@@ -377,6 +401,7 @@ sub print_body {
     my $chk_numbering   = $self->{ 'numbering' } ? 'checked="checked" ' : '';
     my $chk_redshift    = $self->{ 'redshift' } ? 'checked="checked" ' : '';
     my $chk_keepnewline = $self->{ 'keep_newline' } ? 'checked="checked" ' : '';
+    my $chk_spacefunctioncall = $self->{ 'no_space_function' } ? 'checked="checked" ' : '';
 
     my %kw_toggle = ( 0 => '', 1 => '', 2 => '', 3 => '' );
     $kw_toggle{ $self->{ 'uc_keyword' } } = ' selected="selected"';
@@ -421,6 +446,9 @@ sub print_body {
       <br />
       <input type="checkbox" id="id_numbering" name="numbering" value="1" onchange="document.forms[0].original_content.value != ''; document.forms[0].submit();" $chk_numbering/>
       <label for="id_numbering">Statement numbering</label>
+      <br />
+      <input type="checkbox" id="id_no_space_function" name="no_space_function" value="1" onchange="document.forms[0].original_content.value != ''; document.forms[0].submit();" $chk_spacefunctioncall/>
+      <label for="id_no_space_function">No space function call</label>
       <br />
       <input type="checkbox" id="id_redshift" name="redshift" value="1" onchange="document.forms[0].original_content.value != ''; document.forms[0].submit();" $chk_redshift/>
       <label for="id_redshift">Redshift keywords</label>
@@ -659,7 +687,7 @@ Please report any bugs or feature requests to: https://github.com/darold/pgForma
 
 =head1 COPYRIGHT
 
-Copyright 2012-2021 Gilles Darold. All rights reserved.
+Copyright 2012-2023 Gilles Darold. All rights reserved.
 
 =head1 LICENSE
 

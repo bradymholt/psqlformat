@@ -79,6 +79,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         type: "string",
         describe: "Path to file containing a list of function names",
       },
+      noSpaceFunction: {
+        type: "boolean",
+        describe: "Remove the space character between a function call and the open parenthesis that follow",
+      },
       configFile: {
         type: "string",
         describe: "Specify a pg_format config file",

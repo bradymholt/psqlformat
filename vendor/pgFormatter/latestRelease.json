@@ -1,9 +1,9 @@
 {
-  "url": "https://api.github.com/repos/darold/pgFormatter/releases/54610414",
-  "assets_url": "https://api.github.com/repos/darold/pgFormatter/releases/54610414/assets",
-  "upload_url": "https://uploads.github.com/repos/darold/pgFormatter/releases/54610414/assets{?name,label}",
-  "html_url": "https://github.com/darold/pgFormatter/releases/tag/v5.2",
-  "id": 54610414,
+  "url": "https://api.github.com/repos/darold/pgFormatter/releases/91359114",
+  "assets_url": "https://api.github.com/repos/darold/pgFormatter/releases/91359114/assets",
+  "upload_url": "https://uploads.github.com/repos/darold/pgFormatter/releases/91359114/assets{?name,label}",
+  "html_url": "https://github.com/darold/pgFormatter/releases/tag/v5.5",
+  "id": 91359114,
   "author": {
     "login": "darold",
     "id": 538862,
@@ -24,16 +24,16 @@
     "type": "User",
     "site_admin": false
   },
-  "node_id": "RE_kwDOAG8-Ws4DQUnu",
-  "tag_name": "v5.2",
+  "node_id": "RE_kwDOAG8-Ws4FcgeK",
+  "tag_name": "v5.5",
   "target_commitish": "master",
-  "name": "Version 5.2",
+  "name": "Version 5.5",
   "draft": false,
   "prerelease": false,
-  "created_at": "2021-12-03T21:46:19Z",
-  "published_at": "2021-12-03T21:50:03Z",
+  "created_at": "2023-02-04T17:59:45Z",
+  "published_at": "2023-02-04T18:04:13Z",
   "assets": [],
-  "tarball_url": "https://api.github.com/repos/darold/pgFormatter/tarball/v5.2",
-  "zipball_url": "https://api.github.com/repos/darold/pgFormatter/zipball/v5.2",
-  "body": "December 03 2021 - v5.2\r\n\r\nThis maintenance release fixes issues reported by users since the last three months with some improvements and new features.\r\n\r\nNew options and features:\r\n\r\n  * Allow to pass multiple files when using --inplace. Thanks to mieszko4 for the patch.\r\n  * Add a button to copy formatted text to clipboard in the CGI interface. Thanks to Yan Sheng for the feature request.\r\n\r\nHere is the complete list of changes and acknowledgments:\r\n\r\n  - Fix bad formatting of materialized view ddl with parameters. Thanks to Wilson Lin for the report.\r\n  - Fix/unicode and --inplace argument causing an error. Thanks to mieszko4 for the patch.\r\n  - Fix anonymizing disabled in last version. Thanks to Nikolas Poniros for the report.\r\n  - Correctly format casts to quoted types. Thanks to Adam Vartanian for the patch.\r\n"
+  "tarball_url": "https://api.github.com/repos/darold/pgFormatter/tarball/v5.5",
+  "zipball_url": "https://api.github.com/repos/darold/pgFormatter/zipball/v5.5",
+  "body": "February 04 2023 - v5.5\r\n\r\nThis maintenance release fixes some issues reported by users since the last\r\nmonth and some improvements.\r\n\r\nImprovements:\r\n\r\n  * Prevent newline in function supporting the FROM keyword like substring().\r\n  * Add multi-line formatting on TRUNCATE with a table list. Thanks to GabenGar\r\n    for the feature request.\r\n\r\nHere is the complete list of changes and acknowledgments:\r\n\r\n  - Fix not respected --no-space-function behavior with SELECT of function.\r\n    Thanks to fenuks for the report.\r\n  - Update regression test result for fix on double quoted alias name. Thanks\r\n    to Christoph Berg for the report.\r\n  - Fix potential exception on uninitialized variable. Thanks to Nate Smith\r\n    for the report."
 }
