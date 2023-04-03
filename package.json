@@ -34,7 +34,7 @@
     "@types/node": "^14.11.5",
     "@types/yargs": "^15.0.7",
     "chai": "^4.2.0",
-    "jbash": "^1.50.0",
+    "jsh": "^0.39.0",
     "mocha": "^10.1.0",
     "npm-github-release": "^0.13.0",
     "prettier": "^2.1.2",

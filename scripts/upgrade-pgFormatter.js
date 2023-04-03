@@ -1,4 +1,4 @@
-#!/usr/bin/env npx jbash
+#!/usr/bin/env npx jsh
 const path = require("path");
 const fs = require("fs");
 
@@ -29,17 +29,17 @@ const releaseDownloadFileName = "release.zip";
 const releaseDownloadFolder = "release/";
 
 echo("Downloading latest release...");
-eval(`wget -O ${releaseDownloadFileName} ${latestRelease.zipball_url}`);
-eval(`unzip ${releaseDownloadFileName} -d ${releaseDownloadFolder}`);
+exec(`wget -O ${releaseDownloadFileName} ${latestRelease.zipball_url}`);
+exec(`unzip ${releaseDownloadFileName} -d ${releaseDownloadFolder}`);
 
 const targetFilePath = "../vendor/pgFormatter/";
 echo(`Extracting and copying source files to ${targetFilePath} ...`);
 
-eval(`find . -type f -name "pg_format" -exec cp {} ${path.join(__dirname, targetFilePath)} \\;`);
-eval(`find . -type d -name "pgFormatter" -exec cp -r {} ${path.join(__dirname, targetFilePath, "lib/")} \\;`);
+exec(`find . -type f -name "pg_format" -exec cp {} ${path.join(__dirname, targetFilePath)} \\;`);
+exec(`find . -type d -name "pgFormatter" -exec cp -r {} ${path.join(__dirname, targetFilePath, "lib/")} \\;`);
 
-eval(`rm ${releaseDownloadFileName}`);
-eval(`rm -rf ${releaseDownloadFolder}`);
-echo(JSON.stringify(latestRelease, null, 2), latestReleaseFile);
+exec(`rm ${releaseDownloadFileName}`);
+exec(`rm -rf ${releaseDownloadFolder}`);
+writeFile(latestReleaseFile, JSON.stringify(latestRelease, null, 2));
 
 echo("Done!");
