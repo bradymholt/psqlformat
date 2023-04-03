@@ -15,12 +15,12 @@ pgFormatter::CLI - Implementation of command line program to format SQL queries.
 
 =head1 VERSION
 
-Version 5.2
+Version 5.5
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '5.2';
+our $VERSION = '5.5';
 
 use autodie;
 use pgFormatter::Beautify;
@@ -61,14 +61,15 @@ sub run {
     my $self = shift;
     $self->get_command_line_args();
 
-    $self->show_help_and_die( 2, 'can not use multiple input files with -i | --inplace.' ) if (@ARGV > 1 && $self->{ 'cfg' }->{ 'inplace' } == 0);
+    $self->show_help_and_die( 2, 'can not use -i | --inplace option together with the -o | --output option.' ) if ($self->{ 'cfg' }->{ 'inplace' } and $self->{ 'cfg' }->{ 'output' });
 
     my @inputs = @ARGV == 0 ? ('-') : @ARGV;
 
     foreach my $input (@inputs)
     {
         $self->{ 'cfg' }->{ 'input' } = $input;
-        $self->{ 'cfg' }->{ 'output' } = '-'; # Set output to default value.
+        $self->{ 'cfg' }->{ 'output' } ||= '-'; # Set output to default value.
+
 
         $self->validate_args();
         $self->logmsg( 'DEBUG', 'Starting to parse SQL file: %s', $self->{ 'cfg' }->{ 'input' } );
@@ -122,6 +123,10 @@ sub beautify {
     $args{ 'inplace' }      = $self->{ 'cfg' }->{ 'inplace' };
     $args{ 'keep_newline' } = $self->{ 'cfg' }->{ 'keep-newline' };
     $args{ 'extra_function' } = $self->{ 'cfg' }->{ 'extra-function' };
+    $args{ 'extra_keyword' }  = $self->{ 'cfg' }->{ 'extra-keyword' };
+    $args{ 'no_space_function' }  = $self->{ 'cfg' }->{ 'no-space-function' };
+    # Backward compatibility
+    $args{ 'extra_keyword' }  = 'redshift' if (!$self->{ 'cfg' }->{ 'extra-keyword' } && $self->{ 'cfg' }->{ 'redshift' });
 
     if ($self->{ 'query' } && ($args{ 'maxlength' } && length($self->{ 'query' }) > $args{ 'maxlength' })) {
         $self->{ 'query' } = substr($self->{ 'query' }, 0, $args{ 'maxlength' })
@@ -142,6 +147,23 @@ sub beautify {
 	    } else {
 		    warn("WARNING: can not read file $args{ 'extra_function' }\n");
 	    }
+    }
+    if ($args{ 'extra_keyword' } && $args{ 'extra_keyword' } ne 'redshift' && -e $args{ 'extra_keyword' })
+    {
+	    if (open(my $fh, '<', $args{ 'extra_keyword' }))
+	    {
+		    my @fcts = ();
+		    while (my $l = <$fh>) {
+			    chomp($l);
+			    push(@fcts, split(/^[\s,;]+$/, $l));
+		    }
+		    $beautifier->add_keywords(@fcts);
+		    close($fh);
+	    } else {
+		    warn("WARNING: can not read file $args{ 'extra_keyword' }\n");
+	    }
+    } elsif ($args{ 'extra_keyword' } eq 'redshift' or $args{ 'redshift' }) {
+	    $beautifier->add_keywords(@{ $beautifier->{ 'dict' }->{ 'redshift_keywords' } });
     }
     $beautifier->query( $self->{ 'query' } );
     $beautifier->anonymize() if $self->{ 'cfg' }->{ 'anonymize' };
@@ -251,6 +273,7 @@ Options:
     -o | --output file    : define the filename for the output. Default: stdout.
     -p | --placeholder RE : set regex to find code that must not be changed.
     -r | --redshift       : add RedShift keyworks to the list of SQL keyworks.
+                            Obsolete now, use --extra-keyword 'reshift' instead.
     -s | --spaces size    : change space indent, default 4 spaces.
     -S | --separator STR  : dynamic code separator, default to single quote.
     -t | --format-type    : try another formatting type for some statements.
@@ -268,8 +291,14 @@ Options:
                             Default: puts every item on its own line.
     -X | --no-rcfile      : do not read ~/.pg_format automatically. The
                             --config / -c option overrides it.
-    --extra-function FILE : file containing a list of function to use the same
+    --extra-function FILE : file containing a list of functions to use the same
                             formatting as PostgreSQL internal function.
+    --extra-keyword FILE  : file containing a list of keywords to use the same
+                            formatting as PostgreSQL internal keyword. Use
+			    special value 'redshift' for support to Redshift
+			    keywords defined internaly in pgFormatter.
+    --no-space-function : remove space between function call and the open
+                            parenthesis.
 
 Examples:
 
@@ -352,6 +381,8 @@ sub get_command_line_args
         'wrap-after|W=i',
         'inplace|i!',
 	'extra-function=s',
+	'extra-keyword=s',
+	'no-space-function!',
     );
 
     $self->show_help_and_die( 1 ) unless GetOptions( \%cfg, @options );
@@ -395,7 +426,7 @@ sub get_command_line_args
 
     # Set default configuration
     $cfg{ 'spaces' }        //= 4;
-    $cfg{ 'output' }        //= '-';
+    $cfg{ 'output' }        //= '';
     $cfg{ 'function-case' } //= 0;
     $cfg{ 'keyword-case' }  //= 2;
     $cfg{ 'type-case' }     //= 1;
@@ -412,6 +443,8 @@ sub get_command_line_args
     $cfg{ 'redshift' }      //= 0;
     $cfg{ 'no-extra-line' } //= 0;
     $cfg{ 'inplace' }       //= 0;
+    $cfg{ 'extra-keyword' } //= '';
+    $cfg{ 'extra-keyword' }   = 'redshift' if ($cfg{ 'redshift' });
 
     if ($cfg{ 'tabs' })
     {
@@ -436,6 +469,11 @@ sub get_command_line_args
         exit 0;
     }
 
+    if ($cfg{ 'extra-keyword' } && $cfg{ 'extra-keyword' } ne 'redshift' && !-e $cfg{ 'extra-keyword' }) {
+        printf 'FATAL: file for extra keyword list does not exists: %s%s', $cfg{ 'extra-keyword' } , "\n";
+        exit 0;
+    }
+
     $self->{ 'cfg' } = \%cfg;
 
     return;
@@ -454,18 +492,18 @@ sub validate_args {
     $self->show_help_and_die( 2, 'function-case can be only one of: 0, 1, 2, or 3.' ) unless $self->{ 'cfg' }->{ 'function-case' } =~ m{\A[0123]\z};
     $self->show_help_and_die( 2, 'keyword-case can be only one of: 0, 1, 2, or 3.' )  unless $self->{ 'cfg' }->{ 'keyword-case' } =~ m{\A[0123]\z};
     $self->show_help_and_die( 2, 'type-case can be only one of: 0, 1, 2, or 3.' )  unless $self->{ 'cfg' }->{ 'type-case' } =~ m{\A[0123]\z};
-    $self->show_help_and_die( 2, 'can not use -i | --inplace with an output file (-o | --output) .' ) if ($self->{ 'cfg' }->{ 'inplace' } and $self->{ 'cfg' }->{ 'output' } ne '-');
+
+    # Force output file to be the same as inout file when the inplace option is used
+    if ($self->{ 'cfg' }->{ 'inplace' })
+    {
+        $self->{ 'cfg' }->{ 'output' } = $self->{ 'cfg' }->{ 'input' };
+    }
 
     if ($self->{ 'cfg' }->{ 'comma-end' }) {
         $self->{ 'cfg' }->{ 'comma' } = 'end';
     }
     elsif ($self->{ 'cfg' }->{ 'comma-start' }) {
         $self->{ 'cfg' }->{ 'comma' } = 'start';
-    }
-
-    if ($self->{ 'cfg' }->{ 'inplace' } and $self->{ 'cfg' }->{ 'input' } ne '-')
-    {
-        $self->{ 'cfg' }->{ 'output' } = $self->{ 'cfg' }->{ 'input' };
     }
 
     return;
@@ -481,7 +519,7 @@ Please report any bugs or feature requests to: https://github.com/darold/pgForma
 
 =head1 COPYRIGHT
 
-Copyright 2012-2021 Gilles Darold. All rights reserved.
+Copyright 2012-2023 Gilles Darold. All rights reserved.
 
 =head1 LICENSE
 

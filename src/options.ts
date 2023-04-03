@@ -15,6 +15,7 @@ export interface IOptions {
   placeholder?: string;
   extraFunction?: string;
   configFile?: string;
+  noSpaceFunction?: boolean;
 
   perlBinPath?: string;
   pgFormatterPath?: string;

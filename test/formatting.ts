@@ -62,4 +62,20 @@ PERFORM my_nifty_function(id, name);
 Hello, World!
 `);
   });
+
+  it("respects the noSpaceFunction option", function () {
+    expect(
+      formatSql(
+        `\
+PERFORM schema.some_func(arg);
+\
+`,
+        { noSpaceFunction: true }
+      )
+    ).to.equal(`\
+PERFORM
+    schema.some_func(arg);
+
+`);
+  });
 });

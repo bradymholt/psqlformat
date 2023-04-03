@@ -64,6 +64,10 @@ describe("options", function () {
     );
   });
 
+  it("noSpaceFunction", function () {
+    expect(buildCommandArguments({ noSpaceFunction: true })).to.contain("--no-space-function");
+  });
+
   it("configFile", function () {
     expect(buildCommandArguments({ configFile: "/test123/conf" })).to.contain("--config '/test123/conf'");
   });

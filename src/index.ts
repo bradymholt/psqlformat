@@ -121,6 +121,10 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += ` --extra-function '${options.extraFunction}'`;
   }
 
+  if (options.noSpaceFunction) {
+    commandArgs += " --no-space-function";
+  }
+
   if (options.configFile != null) {
     commandArgs += ` --config '${options.configFile}'`;
   }
