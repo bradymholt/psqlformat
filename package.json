@@ -53,6 +53,7 @@
     "test": "npx mocha --require ts-node/register/type-check --recursive ./test/*.ts",
     "start": "ts-node src/bin.ts test/support/query.sql",
     "format": "npx prettier --write ./**/*.ts",
-    "upgrade": "./scripts/upgrade-pgFormatter.js"
+    "upgrade": "./scripts/upgrade-pgFormatter.js",
+    "version": "npm run build && git add -A dist"
   }
 }
