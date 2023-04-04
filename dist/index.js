@@ -18,7 +18,7 @@ function formatFiles(filesOrGlobs, editInPlace, options = {}, log = console.log)
         let command = `${buildCommand(options)} ${path}`;
         // Run pgFormatter
         let output = child_process_1.execSync(command, {
-            encoding: "utf8"
+            encoding: "utf8",
         });
         const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
         formatted += output;
@@ -41,7 +41,7 @@ function formatSql(sqlText, options = {}) {
     // Pass sqlText in as stdin and run pgFormatter
     let formatted = child_process_1.execSync(command, {
         encoding: "utf8",
-        input: sqlText
+        input: sqlText,
     });
     return formatted;
 }
@@ -97,6 +97,9 @@ function buildCommandArguments(options) {
     }
     if (options.extraFunction != null) {
         commandArgs += ` --extra-function '${options.extraFunction}'`;
+    }
+    if (options.noSpaceFunction) {
+        commandArgs += " --no-space-function";
     }
     if (options.configFile != null) {
         commandArgs += ` --config '${options.configFile}'`;

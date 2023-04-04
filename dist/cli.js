@@ -13,70 +13,74 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         .options({
         write: {
             type: "boolean",
-            describe: "Edit files in-place. (Beware!)"
+            describe: "Edit files in-place. (Beware!)",
         },
         spaces: {
             type: "number",
             default: 4,
-            describe: "Number of spaces to indent the code"
+            describe: "Number of spaces to indent the code",
         },
         tabs: {
             type: "boolean",
-            describe: "Use tabs instead of spaces (spaces option is ignored)"
+            describe: "Use tabs instead of spaces (spaces option is ignored)",
         },
         maxLength: {
             type: "number",
-            describe: "Maximum length of a query"
+            describe: "Maximum length of a query",
         },
         commaStart: {
             type: "boolean",
-            describe: "Use preceding comma in parameter list"
+            describe: "Use preceding comma in parameter list",
         },
         commaBreak: {
             type: "boolean",
-            describe: "In insert statement, add a newline after each comma"
+            describe: "In insert statement, add a newline after each comma",
         },
         commaEnd: {
             type: "boolean",
             default: true,
-            describe: "Use trailing comma in parameter list"
+            describe: "Use trailing comma in parameter list",
         },
         noComment: {
             type: "boolean",
-            describe: "Remove any comments"
+            describe: "Remove any comments",
         },
         functionCase: {
             type: "string",
             default: "unchanged",
             choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
-            describe: "Case of the function names"
+            describe: "Case of the function names",
         },
         noGrouping: {
             type: "boolean",
             default: false,
-            describe: "Add a newline between statements in transaction regroupement"
+            describe: "Add a newline between statements in transaction regroupement",
         },
         keywordCase: {
             type: "string",
             default: "uppercase",
             choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
-            describe: "Case of the reserved keywords"
+            describe: "Case of the reserved keywords",
         },
         formatType: {
             type: "boolean",
-            describe: "Use another formatting type for some statements"
+            describe: "Use another formatting type for some statements",
         },
         wrapLimit: {
             type: "number",
-            describe: "Wrap queries at a certain length"
+            describe: "Wrap queries at a certain length",
         },
         placeholder: {
             type: "string",
-            describe: "Regex to find code that must not be changed"
+            describe: "Regex to find code that must not be changed",
         },
         extraFunction: {
             type: "string",
-            describe: "Path to file containing a list of function names"
+            describe: "Path to file containing a list of function names",
+        },
+        noSpaceFunction: {
+            type: "boolean",
+            describe: "Remove the space character between a function call and the open parenthesis that follow",
         },
         configFile: {
             type: "string",
@@ -85,12 +89,12 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         perlBinPath: {
             type: "string",
             default: "perl",
-            describe: "The path to the perl executable"
+            describe: "The path to the perl executable",
         },
         pgFormatterPath: {
             type: "string",
-            describe: "Path to a custom pg_format version"
-        }
+            describe: "Path to a custom pg_format version",
+        },
     })
         .demandCommand(1, "").argv;
     const filesOrGlobs = parsedArguments._;
@@ -109,5 +113,5 @@ By default, output is written to stdout. (use --write option to edit files in-pl
     }
 }
 exports.default = {
-    exec
+    exec,
 };
