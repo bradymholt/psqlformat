@@ -1,6 +1,6 @@
 {
   "name": "psqlformat",
-  "version": "1.18.2",
+  "version": "1.18.3",
   "main": "dist/index.js",
   "bin": {
     "psqlformat": "dist/bin.js"
