@@ -30,6 +30,7 @@ jobs:
           registry-url: "https://registry.npmjs.org"
       - run: npm install
       - run: npm test
+      - run: npm run build
       - name: Version
         run: |
           npm version ${{ github.event.inputs.version_type }} --force -m "Version %s"
