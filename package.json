@@ -36,7 +36,6 @@
     "chai": "^4.2.0",
     "jsh": "^0.39.0",
     "mocha": "^10.1.0",
-    "npm-github-release": "^0.13.0",
     "prettier": "^2.1.2",
     "ts-node": "^9.0.0",
     "typescript": "^4.0.3"
@@ -52,9 +51,7 @@
   "scripts": {
     "build": "tsc",
     "test": "npx mocha --require ts-node/register/type-check --recursive ./test/*.ts",
-    "start": "ts-node src/bin.ts test/support/query.sql",
-    "prerelease": "tsc",
-    "release": "npx npm-github-release",
+    "start": "ts-node src/bin.ts test/support/query.sql",    
     "format": "npx prettier --write ./**/*.ts",
     "upgrade": "./scripts/upgrade-pgFormatter.js"
   }
