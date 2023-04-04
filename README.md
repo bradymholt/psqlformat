@@ -77,6 +77,8 @@ Options:
   --wrapLimit        Wrap queries at a certain length                   [number]
   --placeholder      Regex to find code that must not be changed        [string]
   --extraFunction    Path to file containing a list of function names   [string]
+  --noSpaceFunction  Remove the space character between a function call and the
+                     open parenthesis that follow                      [boolean]
   --configFile       Specify a pg_format config file                    [string]
   --perlBinPath      The path to the perl executable  [string] [default: "perl"]
   --pgFormatterPath  Path to a custom pg_format version                 [string]
