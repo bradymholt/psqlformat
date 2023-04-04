@@ -81,7 +81,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       },
       noSpaceFunction: {
         type: "boolean",
-        describe: "Remove the space character between a function call and the open parenthesis that follow",
+        describe: "Remove the space character between a function call and the open parenthesis that follows",
       },
       configFile: {
         type: "string",
