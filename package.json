@@ -1,6 +1,6 @@
 {
   "name": "psqlformat",
-  "version": "1.18.0",
+  "version": "1.18.1",
   "main": "dist/index.js",
   "bin": {
     "psqlformat": "dist/bin.js"
@@ -51,7 +51,7 @@
   "scripts": {
     "build": "tsc",
     "test": "npx mocha --require ts-node/register/type-check --recursive ./test/*.ts",
-    "start": "ts-node src/bin.ts test/support/query.sql",    
+    "start": "ts-node src/bin.ts test/support/query.sql",
     "format": "npx prettier --write ./**/*.ts",
     "upgrade": "./scripts/upgrade-pgFormatter.js"
   }
