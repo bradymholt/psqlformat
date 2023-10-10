@@ -29,7 +29,7 @@ const releaseDownloadFileName = "release.zip";
 const releaseDownloadFolder = "release/";
 
 echo("Downloading latest release...");
-exec(`wget -O ${releaseDownloadFileName} ${latestRelease.zipball_url}`);
+exec(`curl --location --output ${releaseDownloadFileName} ${latestRelease.zipball_url}`);
 exec(`unzip ${releaseDownloadFileName} -d ${releaseDownloadFolder}`);
 
 const targetFilePath = "../vendor/pgFormatter/";
