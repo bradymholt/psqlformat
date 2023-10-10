@@ -6,7 +6,7 @@ cd(__dirname);
 
 const latestRelease = JSON.parse(
   $(
-    `curl -H "Authorization: token $GITHUB_API_TOKEN" -H "Content-Type: application/json" \
+    `curl -H "Content-Type: application/json" \
  https://api.github.com/repos/darold/pgFormatter/releases/latest`
   )
 );
@@ -29,7 +29,7 @@ const releaseDownloadFileName = "release.zip";
 const releaseDownloadFolder = "release/";
 
 echo("Downloading latest release...");
-exec(`wget -O ${releaseDownloadFileName} ${latestRelease.zipball_url}`);
+exec(`curl --location --output ${releaseDownloadFileName} ${latestRelease.zipball_url}`);
 exec(`unzip ${releaseDownloadFileName} -d ${releaseDownloadFolder}`);
 
 const targetFilePath = "../vendor/pgFormatter/";
