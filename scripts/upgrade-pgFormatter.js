@@ -6,7 +6,7 @@ cd(__dirname);
 
 const latestRelease = JSON.parse(
   $(
-    `curl -H "Authorization: token $GITHUB_API_TOKEN" -H "Content-Type: application/json" \
+    `curl -H "Content-Type: application/json" \
  https://api.github.com/repos/darold/pgFormatter/releases/latest`
   )
 );
