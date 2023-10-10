@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildCommandArguments = exports.buildCommand = exports.CaseOptionEnum = exports.formatSql = exports.formatFiles = void 0;
 const path = require("path");
-const fs = require("fs");
 const globby = require("globby");
 const child_process_1 = require("child_process");
 /**
@@ -11,21 +10,27 @@ const child_process_1 = require("child_process");
  * @param options
  */
 function formatFiles(filesOrGlobs, editInPlace, options = {}, log = console.log) {
-    let paths = globby.sync(filesOrGlobs);
+    var _a;
+    // both the editInPlace and options.write properties mean the same thing, ensure they're aligned here
+    editInPlace = (_a = editInPlace !== null && editInPlace !== void 0 ? editInPlace : options.write) !== null && _a !== void 0 ? _a : false;
+    options.write = editInPlace;
+    const paths = globby.sync(filesOrGlobs);
     let formatted = "";
-    for (let path of paths) {
-        let startTime = process.hrtime();
-        let command = `${buildCommand(options)} ${path}`;
+    const chunkSize = Number(options.chunkSize || 25);
+    for (let i = 0; i < paths.length; i += chunkSize) {
+        const pathsChunk = paths.slice(i, i + chunkSize);
+        const filenamesWrapped = `"${pathsChunk.join('" "')}"`;
+        const startTime = process.hrtime();
+        const command = `${buildCommand(options)} ${filenamesWrapped}`;
         // Run pgFormatter
-        let output = child_process_1.execSync(command, {
+        const output = child_process_1.execSync(command, {
             encoding: "utf8",
         });
         const elapsedTimeMs = Math.round(process.hrtime(startTime)[1] / 1000000);
         formatted += output;
         if (editInPlace) {
-            // Override file with formatted SQL and log progress
-            fs.writeFileSync(path, output);
-            log(`${path} [${elapsedTimeMs}ms]`);
+            const filesOnNewLines = pathsChunk.map((p) => `  ${p}`);
+            log(`[${pathsChunk.length} files in ${elapsedTimeMs}ms]:\n${filesOnNewLines.join("\n")}\n`);
         }
     }
     return formatted;
@@ -56,6 +61,9 @@ function buildCommand(options) {
 exports.buildCommand = buildCommand;
 function buildCommandArguments(options) {
     let commandArgs = "";
+    if (options.write) {
+        commandArgs += ` --inplace`;
+    }
     if (options.spaces) {
         commandArgs += ` --spaces ${options.spaces}`;
     }
