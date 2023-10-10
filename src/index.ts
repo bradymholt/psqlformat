@@ -1,5 +1,4 @@
 import * as path from "path";
-import * as fs from "fs";
 import * as globby from "globby";
 import { execSync } from "child_process";
 import { IOptions } from "./options";
@@ -15,14 +14,22 @@ export function formatFiles(
   options: IOptions = {},
   log: (text: string) => void = console.log
 ) {
-  let paths = globby.sync(filesOrGlobs);
-  let formatted = "";
+  // both the editInPlace and options.write properties mean the same thing, ensure they're aligned here
+  editInPlace = editInPlace ?? options.write ?? false;
+  options.write = editInPlace;
 
-  for (let path of paths) {
-    let startTime = process.hrtime();
-    let command = `${buildCommand(options)} ${path}`;
+  const paths = globby.sync(filesOrGlobs);
+  let formatted = "";
+  const chunkSize = Number(options.chunkSize || 25);
+
+  for (let i = 0; i < paths.length; i += chunkSize) {
+    const pathsChunk = paths.slice(i, i + chunkSize);
+    const filenamesWrapped = `"${pathsChunk.join('" "')}"`;
+
+    const startTime = process.hrtime();
+    const command = `${buildCommand(options)} ${filenamesWrapped}`;
     // Run pgFormatter
-    let output = execSync(command, {
+    const output = execSync(command, {
       encoding: "utf8",
     });
 
@@ -31,9 +38,8 @@ export function formatFiles(
     formatted += output;
 
     if (editInPlace) {
-      // Override file with formatted SQL and log progress
-      fs.writeFileSync(path, output);
-      log(`${path} [${elapsedTimeMs}ms]`);
+      const filesOnNewLines = pathsChunk.map((p) => `  ${p}`);
+      log(`[${pathsChunk.length} files in ${elapsedTimeMs}ms]:\n${filesOnNewLines.join("\n")}\n`);
     }
   }
 
@@ -66,6 +72,10 @@ export function buildCommand(options: IOptions) {
 
 export function buildCommandArguments(options: IOptions) {
   let commandArgs = "";
+
+  if (options.write) {
+    commandArgs += ` --inplace`;
+  }
 
   if (options.spaces) {
     commandArgs += ` --spaces ${options.spaces}`;

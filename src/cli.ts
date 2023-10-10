@@ -96,6 +96,11 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         type: "string",
         describe: "Path to a custom pg_format version",
       },
+      chunkSize: {
+        type: "number",
+        describe: "How many files to pass to pgFormatter at once",
+        default: "25",
+      },
     })
     .demandCommand(1, "").argv;
 
