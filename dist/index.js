@@ -94,6 +94,9 @@ function buildCommandArguments(options) {
     if (options.keywordCase != null) {
         commandArgs += ` --keyword-case ${options.keywordCase}`;
     }
+    if (options.typeCase != null) {
+        commandArgs += ` --type-case ${options.typeCase}`;
+    }
     if (options.formatType) {
         commandArgs += ` --format-type`;
     }
@@ -111,6 +114,12 @@ function buildCommandArguments(options) {
     }
     if (options.configFile != null) {
         commandArgs += ` --config '${options.configFile}'`;
+    }
+    if (options.noExtraLine) {
+        commandArgs += " --no-extra-line";
+    }
+    if (options.wrapComment) {
+        commandArgs += " --wrap-comment";
     }
     return commandArgs;
 }

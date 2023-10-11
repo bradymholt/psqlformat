@@ -1,25 +1,28 @@
 export interface IOptions {
   write?: boolean;
-  spaces?: number;
-  tabs?: boolean;
-  maxLength?: number;
-  commaStart?: boolean;
-  commaBreak?: boolean;
-  commaEnd?: boolean;
-  noComment?: boolean;
-  functionCase?: CaseOptionEnum;
-  noGrouping?: boolean;
-  keywordCase?: CaseOptionEnum;
-  formatType?: boolean;
-  wrapLimit?: number;
-  placeholder?: string;
-  extraFunction?: string;
-  configFile?: string;
-  noSpaceFunction?: boolean;
   chunkSize?: number;
-
   perlBinPath?: string;
   pgFormatterPath?: string;
+
+  commaStart?: boolean;
+  commaBreak?: boolean;
+  wrapComment?: boolean;
+  commaEnd?: boolean;
+  configFile?: string;
+  functionCase?: CaseOptionEnum;
+  noGrouping?: boolean;
+  noExtraLine?: boolean;
+  maxLength?: number;
+  noComment?: boolean;
+  placeholder?: string;
+  spaces?: number;
+  formatType?: boolean;
+  tabs?: boolean;
+  keywordCase?: CaseOptionEnum;
+  typeCase?: CaseOptionEnum;
+  wrapLimit?: number;
+  extraFunction?: string;
+  noSpaceFunction?: boolean;
 }
 
 export enum CaseOptionEnum {
