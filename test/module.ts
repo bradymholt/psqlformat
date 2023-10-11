@@ -82,4 +82,50 @@ FROM
    people
 `);
   });
+
+  it("formats multiple files in-place", function () {
+    const multipleFiles = [
+      "test/support/module_test01.sql",
+      "test/support/module_test02.sql",
+      "test/support/module_test03.sql",
+      "test/support/module_test04.sql",
+    ]
+    for (const tmpFile of multipleFiles) {
+      fs.copyFileSync(queryFilePath, tmpFile);
+    }
+
+    const expectedFormattedContent = `\
+SELECT
+  id,
+  first_name
+FROM
+  people
+`;
+    let stdout = "";
+    let logger = function (message: string) {
+      stdout += message;
+    };
+    formatFiles(multipleFiles, true, { noComment: true, spaces: 2, write: true, chunkSize: 3 }, logger);
+
+    // assert all the file contents were updated as expected
+    for (const tmpFile of multipleFiles) {
+      const updatedContents = fs.readFileSync(tmpFile, { encoding: "utf-8" });
+      expect(updatedContents).to.equal(expectedFormattedContent);
+      fs.unlinkSync(tmpFile);
+    }
+
+    // and that the stdout included all the filenames, and some timing info
+    const stdoutLines = stdout.split("\n");
+    const expectedStdoutLineSubstrings = [
+      "[3 files in ",
+      multipleFiles[0],
+      multipleFiles[1],
+      multipleFiles[2],
+      "[1 files in ",
+      multipleFiles[3],
+    ];
+    for (let i = 0; i < expectedStdoutLineSubstrings.length; i++) {
+      expect(stdoutLines[i]).to.contain(expectedStdoutLineSubstrings[i]);
+    }
+  });
 });
