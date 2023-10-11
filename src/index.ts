@@ -115,6 +115,10 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += ` --keyword-case ${options.keywordCase}`;
   }
 
+  if (options.typeCase != null) {
+    commandArgs += ` --type-case ${options.typeCase}`;
+  }
+
   if (options.formatType) {
     commandArgs += ` --format-type`;
   }
@@ -137,6 +141,14 @@ export function buildCommandArguments(options: IOptions) {
 
   if (options.configFile != null) {
     commandArgs += ` --config '${options.configFile}'`;
+  }
+
+  if (options.noExtraLine) {
+    commandArgs += " --no-extra-line";
+  }
+
+  if (options.wrapComment) {
+    commandArgs += " --wrap-comment";
   }
 
   return commandArgs;
