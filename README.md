@@ -53,7 +53,7 @@ npx psqlformat --write --spaces=2 query.sql
 The command line utility has several options. You can view the options by running `psqlformat -h`.
 
 ```
-Usage: pgformatter [options] <file/glob ...>
+Usage: bin.ts [options] <file/glob ...>
 
 By default, output is written to stdout. (use --write option to edit files
 in-place)
@@ -73,23 +73,33 @@ Options:
   --commaEnd         Use trailing comma in parameter list
                                                        [boolean] [default: true]
   --noComment        Remove any comments                               [boolean]
-  --functionCase     Case of the function names
-         [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
-                                                          [default: "unchanged"]
   --noGrouping       Add a newline between statements in transaction
                      regroupement                     [boolean] [default: false]
-  --keywordCase      Case of the reserved keywords
+  --functionCase     Case to use for function names
+         [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
+                                                          [default: "unchanged"]
+  --keywordCase      Case to use for reserved keywords
          [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
                                                           [default: "uppercase"]
+  --typeCase         Case to use for data type names
+         [string] [choices: "unchanged", "lowercase", "uppercase", "capitalize"]
+                                                          [default: "lowercase"]
   --formatType       Use another formatting type for some statements   [boolean]
   --wrapLimit        Wrap queries at a certain length                   [number]
+  --wrapComment      When wrapLimit is true, apply formatting to comments
+                                                                       [boolean]
   --placeholder      Regex to find code that must not be changed        [string]
   --extraFunction    Path to file containing a list of function names   [string]
   --noSpaceFunction  Remove the space character between a function call and the
-                     open parenthesis that follow                      [boolean]
+                     open parenthesis that follows                     [boolean]
   --configFile       Specify a pg_format config file                    [string]
   --perlBinPath      The path to the perl executable  [string] [default: "perl"]
   --pgFormatterPath  Path to a custom pg_format version                 [string]
+  --chunkSize        How many files to pass to pgFormatter at once
+                                                        [number] [default: "25"]
+  --keepNewline      Preserve empty lines             [boolean] [default: false]
+  --noExtraLine      Do not add an extra empty line at end of formatted output
+                                                                       [boolean]
 ```
 
 ## Module usage
