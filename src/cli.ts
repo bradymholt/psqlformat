@@ -45,23 +45,29 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       noComment: {
         type: "boolean",
         describe: "Remove any comments",
-      },
-      functionCase: {
-        type: "string",
-        default: "unchanged",
-        choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
-        describe: "Case of the function names",
-      },
+      },      
       noGrouping: {
         type: "boolean",
         default: false,
         describe: "Add a newline between statements in transaction regroupement",
       },
+      functionCase: {
+        type: "string",
+        default: "unchanged",
+        choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
+        describe: "Case to use for function names",
+      },
       keywordCase: {
         type: "string",
         default: "uppercase",
         choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
-        describe: "Case of the reserved keywords",
+        describe: "Case to use for reserved keywords",
+      },
+      typeCase: {
+        type: "string",
+        default: "lowercase",
+        choices: ["unchanged", "lowercase", "uppercase", "capitalize"],
+        describe: "Case to use for data type names",
       },
       formatType: {
         type: "boolean",
@@ -70,6 +76,10 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       wrapLimit: {
         type: "number",
         describe: "Wrap queries at a certain length",
+      },
+      wrapComment: {
+        type: "boolean",
+        describe: "When wrapLimit is true, apply formatting to comments",
       },
       placeholder: {
         type: "string",
@@ -100,6 +110,15 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         type: "number",
         describe: "How many files to pass to pgFormatter at once",
         default: "25",
+      },
+      keepNewline: {
+        type: "boolean",
+        describe: "Preserve empty lines",
+        default: false,
+      },
+      noExtraLine: {
+        type: "boolean",
+        describe: "Do not add an extra empty line at end of formatted output",
       },
     })
     .demandCommand(1, "").argv;
