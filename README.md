@@ -95,11 +95,11 @@ Options:
   --configFile       Specify a pg_format config file                    [string]
   --perlBinPath      The path to the perl executable  [string] [default: "perl"]
   --pgFormatterPath  Path to a custom pg_format version                 [string]
-  --chunkSize        How many files to pass to pgFormatter at once
-                                                        [number] [default: "25"]
   --keepNewline      Preserve empty lines             [boolean] [default: false]
   --noExtraLine      Do not add an extra empty line at end of formatted output
                                                                        [boolean]
+  --chunkSize        How many files to pass to pgFormatter at once
+                                                        [number] [default: "25"]
 ```
 
 ## Module usage
