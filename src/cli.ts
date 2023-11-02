@@ -45,7 +45,7 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       noComment: {
         type: "boolean",
         describe: "Remove any comments",
-      },      
+      },
       noGrouping: {
         type: "boolean",
         default: false,
@@ -106,11 +106,6 @@ By default, output is written to stdout. (use --write option to edit files in-pl
         type: "string",
         describe: "Path to a custom pg_format version",
       },
-      chunkSize: {
-        type: "number",
-        describe: "How many files to pass to pgFormatter at once",
-        default: "25",
-      },
       keepNewline: {
         type: "boolean",
         describe: "Preserve empty lines",
@@ -119,6 +114,11 @@ By default, output is written to stdout. (use --write option to edit files in-pl
       noExtraLine: {
         type: "boolean",
         describe: "Do not add an extra empty line at end of formatted output",
+      },
+      chunkSize: {
+        type: "number",
+        describe: "How many files to pass to pgFormatter at once",
+        default: "25",
       },
     })
     .demandCommand(1, "").argv;
