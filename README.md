@@ -1,5 +1,13 @@
 # psqlformat ![build](https://github.com/bradymholt/psqlformat/workflows/build/badge.svg) [![NPM Package](https://img.shields.io/npm/v/psqlformat.svg)](https://www.npmjs.com/package/psqlformat)
 
+<img align="left" src="https://user-images.githubusercontent.com/759811/210273710-b13913e2-0a71-4d9d-94da-1fe538b8a73e.gif"/>
+
+<br/>
+
+ &nbsp;**Would you take a quick second and ⭐️ my repo?**
+
+<br/>
+
 A PostgreSQL SQL syntax formatter that supports a CLI and library / module interface.
 
 This package is a wrapper for [darold/pgFormatter](https://github.com/darold/pgFormatter) and requires Perl to be available.
