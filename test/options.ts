@@ -81,4 +81,8 @@ describe("options", function () {
     expect(buildCommand({ pgFormatterPath: "/usr/bin/custom" })).contain("/usr/bin/custom");
     expect(buildCommand({ pgFormatterPath: "/usr/bin/custom" })).to.not.contain("pg_format");
   });
+
+  it("keepNewline", function () {
+    expect(buildCommandArguments({ keepNewline: true })).to.contain("--keep-newline");
+  });
 });

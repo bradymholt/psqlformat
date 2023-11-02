@@ -151,5 +151,9 @@ export function buildCommandArguments(options: IOptions) {
     commandArgs += " --wrap-comment";
   }
 
+  if (options.keepNewline) {
+    commandArgs += " --keep-newline";
+  }
+
   return commandArgs;
 }

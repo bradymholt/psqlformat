@@ -40,6 +40,10 @@ export interface IOptions {
      */
     noExtraLine?: boolean;
     /**
+     * Preserve empty line in plpgsql code
+     */
+    keepNewline?: boolean;
+    /**
      * Maximum length of a query; the line will be cut before or at the given length
      */
     maxLength?: number;
