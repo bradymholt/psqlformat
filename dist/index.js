@@ -121,6 +121,9 @@ function buildCommandArguments(options) {
     if (options.wrapComment) {
         commandArgs += " --wrap-comment";
     }
+    if (options.keepNewline) {
+        commandArgs += " --keep-newline";
+    }
     return commandArgs;
 }
 exports.buildCommandArguments = buildCommandArguments;
