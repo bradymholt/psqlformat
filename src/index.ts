@@ -1,7 +1,7 @@
 import * as path from "path";
 import * as globby from "globby";
 import { execSync } from "child_process";
-import { IOptions } from "./options";
+import { CaseOptionEnum, IOptions } from "./options";
 
 /**
  *
@@ -104,7 +104,9 @@ export function buildCommandArguments(options: IOptions) {
   }
 
   if (options.functionCase != null) {
-    commandArgs += ` --function-case ${options.functionCase}`;
+    commandArgs += ` --function-case ${
+      !parseInt(<any>options.functionCase) ? CaseOptionEnum[options.functionCase] : options.functionCase
+    }`;
   }
 
   if (options.noGrouping) {
@@ -112,11 +114,15 @@ export function buildCommandArguments(options: IOptions) {
   }
 
   if (options.keywordCase != null) {
-    commandArgs += ` --keyword-case ${options.keywordCase}`;
+    commandArgs += ` --keyword-case ${
+      !parseInt(<any>options.keywordCase) ? CaseOptionEnum[options.keywordCase] : options.keywordCase
+    }`;    
   }
 
   if (options.typeCase != null) {
-    commandArgs += ` --type-case ${options.typeCase}`;
+    commandArgs += ` --type-case ${
+      !parseInt(<any>options.typeCase) ? CaseOptionEnum[options.typeCase] : options.typeCase
+    }`;        
   }
 
   if (options.formatType) {
