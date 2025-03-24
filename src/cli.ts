@@ -127,14 +127,6 @@ By default, output is written to stdout. (use --write option to edit files in-pl
   const write = parsedArguments.write || false;
   const options: IOptions = <any>parsedArguments;
 
-  // Convert option strings to enums
-  if (parsedArguments.functionCase != null) {
-    //options.functionCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>parsedArguments.functionCase];
-  }
-  if (parsedArguments.keywordCase != null) {
-    //options.keywordCase = CaseOptionEnum[<keyof typeof CaseOptionEnum>parsedArguments.keywordCase];
-  }
-
   let output = formatFiles(filesOrGlobs, write, options, log);
   if (!write) {
     log(output);
