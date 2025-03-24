@@ -4,6 +4,7 @@ use strict;
 use warnings;
 use warnings qw( FATAL );
 use Encode qw( decode );
+use JSON;
 
 =head1 NAME
 
@@ -11,12 +12,12 @@ pgFormatter::CGI - Implementation of CGI-BIN script to format SQL queries.
 
 =head1 VERSION
 
-Version 5.5
+Version 5.6
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '5.5';
+our $VERSION = '5.6';
 
 use pgFormatter::Beautify;
 use File::Basename;
@@ -49,6 +50,25 @@ sub new {
 
 =head2 run
 
+Route to the right handler based on what sort of data we receive
+
+=cut
+
+sub run {
+    my $self = shift;
+    $self->get_cgi();
+    if ($self->{ 'cgi' }->Accept( "text/html" )) {
+      $self->run_webpage();
+    } elsif ($self->{ 'cgi' }->Accept( "application/json" ) && $self->{ 'enable_api' }) {
+      $self->run_api();
+    } else {
+      $self->print_error();
+    }
+    return;
+}
+
+=head2 run_webpage
+
 Wraps all work related to generating html page.
 
 It calls set of functions to get CGI object, receive parameters from
@@ -56,15 +76,31 @@ request, sanitize them, beautify query (if provided) and print ghtml.
 
 =cut
 
-sub run {
+sub run_webpage {
     my $self = shift;
-    $self->get_cgi();
     $self->get_params();
     $self->sanitize_params();
     $self->print_headers();
     $self->beautify_query();
     $self->print_body();
     $self->print_footer();
+    return;
+}
+
+
+=head2 run_api
+
+Wraps all work related to generating JSON response when used as API.
+
+=cut
+
+sub run_api {
+    my $self = shift;
+    $self->get_api_params();
+    $self->sanitize_params();
+    $self->{'format'} = 'text'; # we are never going to output HTML when doing JSON
+    $self->beautify_query();
+    $self->print_json();
     return;
 }
 
@@ -103,6 +139,7 @@ sub set_config {
     $self->{ 'outdir' }       = '';
     $self->{ 'help' }         = '';
     $self->{ 'version' }      = '';
+    $self->{ 'enable_api' }   = 1;
     $self->{ 'debug' }        = 0;
     $self->{ 'content' }      = '';
     $self->{ 'original_content' }      = '';
@@ -155,6 +192,7 @@ sub set_config {
     $self->{ 'extra_function' }//= '';
     $self->{ 'extra_keyword' } //= '';
     $self->{ 'no_space_function' } //= 0;
+    $self->{ 'redundant_parenthesis' } //= 0;
     # Backward compatibility
     $self->{ 'extra_keyword' } = 'redshift' if (!$self->{ 'extra_keyword' } && $self->{ 'redshift' });
 
@@ -219,7 +257,7 @@ sub get_params {
     # shortcut
     my $cgi = $self->{ 'cgi' };
 
-    for my $param_name ( qw( colorize spaces uc_keyword uc_function uc_type content nocomment nogrouping show_example anonymize separator comma comma_break format_type wrap_after original_content numbering redshift keep_newline no_space_function) ) {
+    for my $param_name ( qw( colorize spaces uc_keyword uc_function uc_type content nocomment nogrouping show_example anonymize separator comma comma_break format_type wrap_after original_content numbering redshift keep_newline no_space_function redundant_parenthesis) ) {
         $self->{ $param_name } = $cgi->param( $param_name ) if defined $cgi->param( $param_name );
     }
 
@@ -253,6 +291,28 @@ sub get_params {
     return;
 }
 
+=head2
+
+Get params for the API version of this service
+
+=cut
+
+sub get_api_params {
+    my $self = shift;
+
+    return unless $self->{ 'cgi' }->param;
+
+    # shortcut
+    my $cgi = $self->{ 'cgi' };
+
+    my $postdata = $cgi->param('POSTDATA');
+    my $json_params = decode_json($postdata);
+    for my $param_name ( qw( colorize spaces uc_keyword uc_function uc_type content nocomment nogrouping show_example anonymize separator comma comma_break format_type wrap_after original_content numbering redshift keep_newline no_space_function redundant_parenthesis) ) {
+        $self->{ $param_name } = $json_params->{$param_name} if defined $json_params->{$param_name};
+    }
+    return;
+}
+
 =head2 sanitize_params
 
 Overrides parameter values if given values were not within acceptable ranges.
@@ -278,6 +338,7 @@ sub sanitize_params {
     $self->{ 'redshift' }     = 0 if ($self->{ 'redshift' } !~ /^(0|1)$/);
     $self->{ 'keep_newline' }   = 0 if ($self->{ 'keep_newline' } !~ /^(0|1)$/);
     $self->{ 'no_space_function' } = 0 if ($self->{ 'no_space_function' } !~ /^(0|1)$/);
+    $self->{ 'redundant_parenthesis' } = 0 if ($self->{ 'redundant_parenthesis' } !~ /^(0|1)$/);
 
     if ( $self->{ 'show_example' } ) {
         $self->{ 'content' } = q{
@@ -326,8 +387,9 @@ sub beautify_query {
     $args{ 'redshift' }     = 1 if $self->{ 'redshift' };
     $args{ 'keep_newline' } = 1 if $self->{ 'keep_newline' };
     $args{ 'no_space_function' } = 1 if $self->{ 'no_space_function' };
+    $args{ 'redundant_parenthesis' } = 1 if $self->{ 'redundant_parenthesis' };
 
-    $self->{ 'content' } = &remove_extra_parenthesis($self->{ 'content' } ) if ($self->{ 'content' } );
+    $self->{ 'content' } = &remove_extra_parenthesis($self->{ 'content' } ) if (!$self->{ 'redundant_parenthesis' } && $self->{ 'content' } );
 
     my $beautifier = pgFormatter::Beautify->new( %args );
     if ($self->{ 'extra_function' } && -e $self->{ 'extra_function' })
@@ -382,6 +444,19 @@ sub remove_extra_parenthesis {
     return $str;
 }
 
+=head2 print_json
+
+Outputs beautified SQL as JSON
+
+=cut
+
+sub print_json {
+  my $self = shift;
+  print $self->{ 'cgi' }->header(-type => 'application/json', -charset => 'utf-8');
+  my $h = { formatted => ${self}->{ 'content' } };
+  print encode_json $h
+}
+
 =head2
 
 Outputs body of the page.
@@ -402,6 +477,7 @@ sub print_body {
     my $chk_redshift    = $self->{ 'redshift' } ? 'checked="checked" ' : '';
     my $chk_keepnewline = $self->{ 'keep_newline' } ? 'checked="checked" ' : '';
     my $chk_spacefunctioncall = $self->{ 'no_space_function' } ? 'checked="checked" ' : '';
+    my $chk_redundantparenthesis = $self->{ 'redundant_parenthesis' } ? 'checked="checked" ' : '';
 
     my %kw_toggle = ( 0 => '', 1 => '', 2 => '', 3 => '' );
     $kw_toggle{ $self->{ 'uc_keyword' } } = ' selected="selected"';
@@ -452,6 +528,9 @@ sub print_body {
       <br />
       <input type="checkbox" id="id_redshift" name="redshift" value="1" onchange="document.forms[0].original_content.value != ''; document.forms[0].submit();" $chk_redshift/>
       <label for="id_redshift">Redshift keywords</label>
+      <br />
+      <input type="checkbox" id="id_redundant_parenthesis" name="redundant_parenthesis" value="1" onchange="document.forms[0].original_content.value != ''; document.forms[0].submit();" $chk_redundantparenthesis/>
+      <label for="id_redundant_parenthesis">Keep redundant parenthesis</label>
       </div>
     </fieldset>
       <br />
@@ -590,6 +669,18 @@ sub _load_optional_file {
     return $content;
 }
 
+=head2 print_error
+
+Outputs an error message when no acceptable response is found.
+
+=cut
+
+sub print_error {
+    my $self = shift;
+    print $self->{ 'cgi' }->header(-charset => 'utf-8', -type => 'text/plain', status=>'400');
+    print "Bad request";
+}
+
 =head2 print_headers
 
 Outputs page headers - both HTTP level headers, and HTML.
@@ -687,7 +778,7 @@ Please report any bugs or feature requests to: https://github.com/darold/pgForma
 
 =head1 COPYRIGHT
 
-Copyright 2012-2023 Gilles Darold. All rights reserved.
+Copyright 2012-2025 Gilles Darold. All rights reserved.
 
 =head1 LICENSE
 
