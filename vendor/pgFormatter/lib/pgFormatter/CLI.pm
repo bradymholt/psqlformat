@@ -15,12 +15,12 @@ pgFormatter::CLI - Implementation of command line program to format SQL queries.
 
 =head1 VERSION
 
-Version 5.5
+Version 5.6
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '5.5';
+our $VERSION = '5.6';
 
 use autodie;
 use pgFormatter::Beautify;
@@ -125,6 +125,7 @@ sub beautify {
     $args{ 'extra_function' } = $self->{ 'cfg' }->{ 'extra-function' };
     $args{ 'extra_keyword' }  = $self->{ 'cfg' }->{ 'extra-keyword' };
     $args{ 'no_space_function' }  = $self->{ 'cfg' }->{ 'no-space-function' };
+    $args{ 'redundant_parenthesis' }  = $self->{ 'cfg' }->{ 'redundant-parenthesis' };
     # Backward compatibility
     $args{ 'extra_keyword' }  = 'redshift' if (!$self->{ 'cfg' }->{ 'extra-keyword' } && $self->{ 'cfg' }->{ 'redshift' });
 
@@ -251,11 +252,13 @@ Options:
     -b | --comma-start    : in a parameters list, start with the comma (see -e)
     -B | --comma-break    : in insert statement, add a newline after each comma.
     -c | --config FILE    : use a configuration file. Default is to not use
-                            configuration file or ~/.pg_format if it exists.
+                            configuration file unless files ./.pg_format or
+			    \$HOME/.pg_format or the XDG Base Directory file
+			    \$XDG_CONFIG_HOME/pg_format/pg_format.conf exist.
     -C | --wrap-comment   : with --wrap-limit, apply reformatting to comments.
     -d | --debug          : enable debug mode. Disabled by default.
     -e | --comma-end      : in a parameters list, end with the comma (default)
-    -f | --function-case N: Change the case of the reserved keyword. Default is
+    -f | --function-case N: Change the case of the PostgreSQL functions. Default
                             unchanged: 0. Values: 0=>unchanged, 1=>lowercase,
                             2=>uppercase, 3=>capitalize.
     -F | --format STR     : output format: text or html. Default: text.
@@ -273,7 +276,7 @@ Options:
     -o | --output file    : define the filename for the output. Default: stdout.
     -p | --placeholder RE : set regex to find code that must not be changed.
     -r | --redshift       : add RedShift keyworks to the list of SQL keyworks.
-                            Obsolete now, use --extra-keyword 'reshift' instead.
+                            Obsolete now, use --extra-keyword 'redshift' instead.
     -s | --spaces size    : change space indent, default 4 spaces.
     -S | --separator STR  : dynamic code separator, default to single quote.
     -t | --format-type    : try another formatting type for some statements.
@@ -289,8 +292,9 @@ Options:
     -w | --wrap-limit N   : wrap queries at a certain length.
     -W | --wrap-after N   : number of column after which lists must be wrapped.
                             Default: puts every item on its own line.
-    -X | --no-rcfile      : do not read ~/.pg_format automatically. The
-                            --config / -c option overrides it.
+    -X | --no-rcfile      : don't read rc files automatically (./.pg_format or
+                            \$HOME/.pg_format or \$XDG_CONFIG_HOME/pg_format).
+			    The --config / -c option overrides it.
     --extra-function FILE : file containing a list of functions to use the same
                             formatting as PostgreSQL internal function.
     --extra-keyword FILE  : file containing a list of keywords to use the same
@@ -299,6 +303,7 @@ Options:
 			    keywords defined internaly in pgFormatter.
     --no-space-function : remove space between function call and the open
                             parenthesis.
+    --redundant-parenthesis: do not remove redundant parenthesis in DML.
 
 Examples:
 
@@ -383,6 +388,7 @@ sub get_command_line_args
 	'extra-function=s',
 	'extra-keyword=s',
 	'no-space-function!',
+	'redundant-parenthesis!',
     );
 
     $self->show_help_and_die( 1 ) unless GetOptions( \%cfg, @options );
@@ -398,8 +404,12 @@ sub get_command_line_args
     {
 	if (-e ".pg_format") {
 		$cfg{ 'config' } //= ".pg_format";
-	} else {
-		$cfg{ 'config' } //= (exists  $ENV{HOME}) ? "$ENV{HOME}/.pg_format" : ".pg_format";
+	} elsif (defined $ENV{HOME} && -e "$ENV{HOME}/.pg_format") {
+		$cfg{ 'config' } //= "$ENV{HOME}/.pg_format";
+        } elsif (defined $ENV{USERPROFILE} && -e "$ENV{USERPROFILE}/.pg_format") {
+		$cfg{ 'config' } //= "$ENV{USERPROFILE}/.pg_format";
+	} elsif (defined $ENV{XDG_CONFIG_HOME} && -e "$ENV{XDG_CONFIG_HOME}/pg_format/pg_format.conf") {
+		$cfg{ 'config' } //= "$ENV{XDG_CONFIG_HOME}/pg_format/pg_format.conf";
 	}
     }
 
@@ -519,7 +529,7 @@ Please report any bugs or feature requests to: https://github.com/darold/pgForma
 
 =head1 COPYRIGHT
 
-Copyright 2012-2023 Gilles Darold. All rights reserved.
+Copyright 2012-2025 Gilles Darold. All rights reserved.
 
 =head1 LICENSE
 
