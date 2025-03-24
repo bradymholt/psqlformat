@@ -2,7 +2,6 @@
 Object.defineProperty(exports, "__esModule", { value: true });
 const yargs = require("yargs");
 const index_1 = require("./index");
-const options_1 = require("./options");
 function exec(args, log = console.log) {
     let parsedArguments = yargs(args)
         .usage(`
@@ -105,11 +104,6 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             type: "string",
             describe: "Path to a custom pg_format version",
         },
-        chunkSize: {
-            type: "number",
-            describe: "How many files to pass to pgFormatter at once",
-            default: "25",
-        },
         keepNewline: {
             type: "boolean",
             describe: "Preserve empty lines",
@@ -119,18 +113,16 @@ By default, output is written to stdout. (use --write option to edit files in-pl
             type: "boolean",
             describe: "Do not add an extra empty line at end of formatted output",
         },
+        chunkSize: {
+            type: "number",
+            describe: "How many files to pass to pgFormatter at once",
+            default: "25",
+        },
     })
         .demandCommand(1, "").argv;
     const filesOrGlobs = parsedArguments._;
     const write = parsedArguments.write || false;
     const options = parsedArguments;
-    // Convert option strings to enums
-    if (parsedArguments.functionCase != null) {
-        options.functionCase = options_1.CaseOptionEnum[parsedArguments.functionCase];
-    }
-    if (parsedArguments.keywordCase != null) {
-        options.keywordCase = options_1.CaseOptionEnum[parsedArguments.keywordCase];
-    }
     let output = index_1.formatFiles(filesOrGlobs, write, options, log);
     if (!write) {
         log(output);

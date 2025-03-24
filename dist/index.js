@@ -4,6 +4,7 @@ exports.buildCommandArguments = exports.buildCommand = exports.CaseOptionEnum = 
 const path = require("path");
 const globby = require("globby");
 const child_process_1 = require("child_process");
+const options_1 = require("./options");
 /**
  *
  * @param fileOrGlob The file path or glob to use (i.e. /tmp/query.sql or *.sql)
@@ -51,8 +52,8 @@ function formatSql(sqlText, options = {}) {
     return formatted;
 }
 exports.formatSql = formatSql;
-var options_1 = require("./options");
-Object.defineProperty(exports, "CaseOptionEnum", { enumerable: true, get: function () { return options_1.CaseOptionEnum; } });
+var options_2 = require("./options");
+Object.defineProperty(exports, "CaseOptionEnum", { enumerable: true, get: function () { return options_2.CaseOptionEnum; } });
 function buildCommand(options) {
     let pgFormatterPath = options.pgFormatterPath || path.resolve(__dirname, "../vendor/pgFormatter/pg_format");
     let commandArgs = buildCommandArguments(options);
@@ -86,16 +87,16 @@ function buildCommandArguments(options) {
         commandArgs += " --nocomment";
     }
     if (options.functionCase != null) {
-        commandArgs += ` --function-case ${options.functionCase}`;
+        commandArgs += ` --function-case ${!parseInt(options.functionCase) ? options_1.CaseOptionEnum[options.functionCase] : options.functionCase}`;
     }
     if (options.noGrouping) {
         commandArgs += " --nogrouping";
     }
     if (options.keywordCase != null) {
-        commandArgs += ` --keyword-case ${options.keywordCase}`;
+        commandArgs += ` --keyword-case ${!parseInt(options.keywordCase) ? options_1.CaseOptionEnum[options.keywordCase] : options.keywordCase}`;
     }
     if (options.typeCase != null) {
-        commandArgs += ` --type-case ${options.typeCase}`;
+        commandArgs += ` --type-case ${!parseInt(options.typeCase) ? options_1.CaseOptionEnum[options.typeCase] : options.typeCase}`;
     }
     if (options.formatType) {
         commandArgs += ` --format-type`;
