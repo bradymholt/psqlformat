@@ -105,7 +105,7 @@ export function buildCommandArguments(options: IOptions) {
 
   if (options.functionCase != null) {
     commandArgs += ` --function-case ${
-      !parseInt(<any>options.functionCase) ? CaseOptionEnum[options.functionCase] : options.functionCase
+      !isNaN(Number(options.functionCase)) ? options.functionCase : CaseOptionEnum[options.functionCase]
     }`;
   }
 
@@ -115,14 +115,14 @@ export function buildCommandArguments(options: IOptions) {
 
   if (options.keywordCase != null) {
     commandArgs += ` --keyword-case ${
-      !parseInt(<any>options.keywordCase) ? CaseOptionEnum[options.keywordCase] : options.keywordCase
-    }`;    
+      !isNaN(Number(options.keywordCase)) ? options.keywordCase : CaseOptionEnum[options.keywordCase]
+    }`;
   }
 
   if (options.typeCase != null) {
     commandArgs += ` --type-case ${
-      !parseInt(<any>options.typeCase) ? CaseOptionEnum[options.typeCase] : options.typeCase
-    }`;        
+      !isNaN(Number(options.typeCase)) ? options.typeCase : CaseOptionEnum[options.typeCase]
+    }`;
   }
 
   if (options.formatType) {

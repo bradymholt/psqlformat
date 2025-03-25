@@ -1,2 +1,1 @@
-1. Run `npm run build` and commit any changes
-2. Run "Publish" workflow.
+1. Run "Publish" workflow.

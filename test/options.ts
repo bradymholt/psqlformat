@@ -27,6 +27,7 @@ describe("options", function () {
   });
 
   it("functionCase", function () {
+    expect(buildCommandArguments({ functionCase: CaseOptionEnum.unchanged })).to.contain("--function-case 0");
     expect(buildCommandArguments({ functionCase: CaseOptionEnum.lowercase })).to.contain("--function-case 1");
   });
 
