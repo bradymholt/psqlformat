@@ -87,16 +87,16 @@ function buildCommandArguments(options) {
         commandArgs += " --nocomment";
     }
     if (options.functionCase != null) {
-        commandArgs += ` --function-case ${!parseInt(options.functionCase) ? options_1.CaseOptionEnum[options.functionCase] : options.functionCase}`;
+        commandArgs += ` --function-case ${!isNaN(Number(options.functionCase)) ? options.functionCase : options_1.CaseOptionEnum[options.functionCase]}`;
     }
     if (options.noGrouping) {
         commandArgs += " --nogrouping";
     }
     if (options.keywordCase != null) {
-        commandArgs += ` --keyword-case ${!parseInt(options.keywordCase) ? options_1.CaseOptionEnum[options.keywordCase] : options.keywordCase}`;
+        commandArgs += ` --keyword-case ${!isNaN(Number(options.keywordCase)) ? options.keywordCase : options_1.CaseOptionEnum[options.keywordCase]}`;
     }
     if (options.typeCase != null) {
-        commandArgs += ` --type-case ${!parseInt(options.typeCase) ? options_1.CaseOptionEnum[options.typeCase] : options.typeCase}`;
+        commandArgs += ` --type-case ${!isNaN(Number(options.typeCase)) ? options.typeCase : options_1.CaseOptionEnum[options.typeCase]}`;
     }
     if (options.formatType) {
         commandArgs += ` --format-type`;
