@@ -29,12 +29,12 @@ pgFormatter::Beautify - Library for pretty-printing SQL queries
 
 =head1 VERSION
 
-Version 5.8
+Version 5.9
 
 =cut
 
 # Version of pgFormatter
-our $VERSION = '5.8';
+our $VERSION = '5.9';
 
 # Inclusion of code from Perl package SQL::Beautify
 # Copyright (C) 2009 by Jonas Kramer
@@ -160,7 +160,7 @@ Takes options as hash. Following options are recognized:
 
 =item * no_extra_line - do not add an extra empty line at end of the output
 
-=item * keep_newline - preserve empty line in plpgsql code 
+=item * keep_newline - preserve empty line in plpgsql code
 
 =item * no_space_function - remove space before function call and open parenthesis
 
@@ -632,6 +632,8 @@ sub tokenize_sql {
 		|
 		\/\/			# mysql delimiter ( $$ is handled later with PG code delimiters )
 		|
+		\d*\.?\d+e[-+]\d+			# scientific notation with exponents
+		|
 		(?:COPY\s+[^\s]+\s+\((?:.*?)\\\.)		# COPY and its content
 		|
 		[^\s\(,]+\%(?:ROWTYPE|TYPE)      # single line comments
@@ -689,7 +691,7 @@ sub tokenize_sql {
 		|
 		(?:[\w:\@]+[\$]*[\w:\@]*(?:\.(?:\w+|\*)?)*) # words, standard named placeholders, db.table.*, db.*
 		|
-		(?:\$\w+\$)
+		(?:\$\w+\$) # text delimiter
                 |
                 (?: \$_\$ | \$\d+ | \${1,2} | \$\w+\$) # dollar expressions - eg $_$ $3 $$ $BODY$
                 |
@@ -753,6 +755,11 @@ sub tokenize_sql {
 			{
 				$query[$i] = $query[ $i - 1 ] . $query[$i];
 				$query[ $i - 1 ] = '';
+			}
+			elsif ($query[$i - 1] =~ /\$\w+$/ and $query[$i] eq '$')
+			{
+				$query[$i - 1] =~ s/(\$\w+)$//;
+				$query[$i] = $1 . $query[$i];
 			}
 		}
 	}
@@ -863,6 +870,7 @@ sub beautify {
 	$self->{'_language_sql'}               = 0;
 	$self->{'_first_when_in_case'}         = 0;
 	$self->{'_is_in_if'}                   = 0;
+	$self->{ '_is_in_return_query' }       = 0;
 	$self->{'_is_in_set'}                  = 0;
 	$self->{'_is_in_conversion'}           = 0;
 	$self->{'_is_in_case'}                 = ();
@@ -2467,7 +2475,7 @@ sub beautify {
 					$add_newline
 				and $self->{'comma'} eq 'end'
 				and (  $self->{'comma_break'}
-					|| ($self->{'_current_sql_stmt'} ne 'INSERT' 
+					|| ($self->{'_current_sql_stmt'} ne 'INSERT'
 				     		&& ($self->{'_current_sql_stmt'} ne 'DO UPDATE'
 							|| !$self->{'_parenthesis_level'})) )
 			  )
@@ -2482,10 +2490,12 @@ sub beautify {
 
 			$self->_add_token($token);
 
-			next
-			  if (  $token eq ';'
+			if (  $token eq ';'
 				and $#{ $self->{'_is_in_case'} } >= 0
-				and uc($last) ne 'CASE' );
+				and uc($last) ne 'CASE' ) {
+				$last = $self->_set_last( $token, $last );
+				next;
+			}
 
 			if ( $self->{'_is_in_type'} and $last eq ')' ) {
 				$self->_reset_level( $token, $last )
@@ -2497,6 +2507,8 @@ sub beautify {
 				$self->_back( $token, $last );
 			}
 			elsif ( $self->{'_is_in_create'} && $self->{'_is_in_block'} > -1 ) {
+				$self->_pop_level( $token, $last );
+			} elsif ( $self->{'_is_in_return_query'} ) {
 				$self->_pop_level( $token, $last );
 			}
 
@@ -2560,6 +2572,7 @@ sub beautify {
 			$self->{'_is_in_materialized'}         = 0;
 			$self->{'_is_in_drop_function'}        = 0;
 			$self->{'_current_full_sql_stmt'}      = '';
+			$self->{ '_is_in_return_query' }       = 0;
 
 			if ( $self->{'_insert_values'} ) {
 				if (    $self->{'_is_in_block'} == -1
@@ -2961,10 +2974,6 @@ sub beautify {
 			( uc($token) eq 'ON' and uc( $self->_next_token() ) eq 'CONFLICT' )
 		  )
 		{
-			#if (uc($last) ne 'RAISE' and $token =~ /^EXCEPTION$/i)
-			#{
-			#$self->{ '_is_in_exception' } = 1;
-			#}
 			if (    $self->{'format_type'}
 				and uc($token) eq 'GROUP'
 				and uc( $self->_next_token() ) eq 'BY' )
@@ -3183,6 +3192,7 @@ sub beautify {
 				{
 					$self->_new_line( $token, $last );
 					$self->_add_token($token);
+					$last = $self->_set_last( $token, $last );
 					next;
 				}
 			}
@@ -3270,7 +3280,11 @@ sub beautify {
 				$self->_back( $token, $last );
 				$self->{'_is_in_join'} = 0;
 			}
-			$self->_back( $token, $last ) unless defined $last and $last eq '(';
+			if ($self->{'_is_in_return_query'} and $#{ $self->{'_level_stack'} } >= 0) {
+				$self->_set_level( $self->{'_level_stack'}[-1], $token, $last );
+			} else {
+				$self->_back( $token, $last ) unless defined $last and $last eq '(';
+			}
 			$self->_new_line( $token, $last );
 			$self->_add_token($token);
 			$self->_new_line( $token, $last )
@@ -3285,7 +3299,7 @@ sub beautify {
 			and ( not defined $last or uc($last) ne 'MATCH' ) )
 		{
 			$self->{'no_break'} = 0;
-			if ( !$self->{'_is_in_join'} and ( $last and $last ne ')' ) ) {
+			if ( !$self->{'_is_in_join'} and ( defined $last and $last ne ')' ) ) {
 				$self->_back( $token, $last ) if ($#{ $self->{'_level_stack'} } < 0 or $self->{'_level'} > $self->{'_level_stack'}[-1]+1);
 			}
 			if ( $self->{'_has_over_in_join'} ) {
@@ -3318,7 +3332,7 @@ sub beautify {
 				$self->_new_line( $token, $last );
 				$self->_back( $token, $last )
 				  if ( $self->{'_has_over_in_join'} );
-				$self->{'_has_over_in_join'} = 0;
+				  $self->{'_has_over_in_join'} = 0;
 			}
 			$self->_add_token($token);
 			$self->{'_is_in_join'} = 1;
@@ -3350,7 +3364,7 @@ sub beautify {
 			$self->{'_is_in_join'} = 0;
 			if (    !$self->{'_is_in_if'}
 				and !$self->{'_is_in_index'}
-				and ( !$last or $last !~ /^(?:CREATE)$/i )
+				and ( not defined $last or $last !~ /^(?:CREATE)$/i )
 				and ( $self->{'_is_in_create'} <= 2 )
 				and !$self->{'_is_in_trigger'} )
 			{
@@ -3444,6 +3458,12 @@ sub beautify {
 				  if ( !$self->{'_is_in_join'} );
 			}
 			$self->_add_token($token);
+
+			if (defined $self->_next_token and uc($self->_next_token) eq 'ERRCODE') {
+				$self->_set_level( $self->_pop_level( $token, $last ),
+					$token, $last );
+			}
+
 			$self->{'_is_in_using'} = 1;
 			$self->{'_is_in_policy'}++
 			  if ( !$self->{'_is_in_from'}
@@ -3595,6 +3615,7 @@ sub beautify {
 				  )
 				{
 					if (  !$self->{'_parenthesis_level'}
+						&& !$self->{'_has_over_in_join'}
 						&& $self->{'_is_in_from'} )
 					{
 						$self->_set_level(
@@ -3667,8 +3688,17 @@ sub beautify {
 					$self->{'content'} =~ s/\s+$/\n/s;
 				}
 
+				if ($#{ $self->{'_is_in_case'} } >= 0 && defined $last && $last eq ';') {
+					$self->_new_line( $token, $last );
+				}
+
 				# Finally add the token without further condition
 				$self->_add_token( $token, $last );
+
+				if (uc($token) eq 'RETURN' and $self->_next_token =~ /^QUERY$/i) {
+					$self->_push_level( $self->{'_level'}, $token, $last );
+					$self->{ '_is_in_return_query' } = 1;
+				}
 
 				if ( $last eq "'" and $token =~ /^(BEGIN|DECLARE)$/i ) {
 					$last = $self->_set_last( $token, $last );
@@ -3715,11 +3745,14 @@ sub beautify {
 	# Attempt to eliminate redundant parenthesis in DML queries
 	if ( !$self->{'redundant_parenthesis'} ) {
 		while ( $self->{'content'} =~
-s/(\s+(?:WHERE|SELECT|FROM)\s+[^;]+)[\(]{2}([^\(\)]+)[\)]{2}([^;]+)/$1($2)$3/igs
+s/(\s+(?:WHERE|SELECT|FROM)\s+(?!TO)\s+[^;]+)[\(]{2}([^\(\)]+)[\)]{2}([^;]+)/$1($2)$3/igs
 		  )
 		{
 		}
 	}
+
+	# Add newline after ariga/atlas related comments
+	$self->{'content'} =~ s/(\-\-\s*atlas:[^\n]+)/$1\n/gs;
 
 	return;
 }
@@ -3924,7 +3957,7 @@ sub _add_token {
 			  if ($DEBUG_SP);
 			$self->{'content'} .= $sp;
 		}
-		else { 
+		else {
 			print STDERR "DEBUG_SPC: 7) last=", ( $last_token || '' ),
 			  ", token=$token\n"
 			  if ($DEBUG_SP);
@@ -4307,6 +4340,9 @@ sub _is_keyword {
 			and !$self->{'_is_in_alter'}
 			and !grep( { uc($_) eq uc($next_token) } @{ $self->{'types'} } ) );
 	}
+
+	# False negative
+	return 1 if ($token =~ /^QUERY$/i and defined $last_token and uc($last_token) eq 'RETURN');
 
 	if (    $DEBUG
 		and defined $token
@@ -5583,7 +5619,7 @@ Please report any bugs or feature requests to: https://github.com/darold/pgForma
 
 =head1 COPYRIGHT
 
-Copyright 2012-2025 Gilles Darold. All rights reserved.
+Copyright 2012-2026 Gilles Darold. All rights reserved.
 
 =head1 LICENSE
 
