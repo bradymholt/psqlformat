@@ -173,7 +173,6 @@ psqlformat.formatFiles(path.resolve(__dirname, "query.sql"), true, {
 // query.sql file should have been edited in-place.
 ```
 
-
 ### TypeScript
 
 psqlformat is written using TypeScript and has declaration files (`.d.ts`) available so that if you are using TypeScript in your own project,
